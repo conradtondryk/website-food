@@ -18,3 +18,8 @@ export interface FoodItem {
   macros: FoodMacros;
   summary: FoodSummary;
 }
+
+export interface Winner {
+  foodName: string;
+  reason: string;
+}
