@@ -14,20 +14,20 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "food battle",
-  description: "compare food macros and find the healthiest option. search and compare nutritional information for any food.",
+  description: "compare food macros.",
   icons: {
     icon: "/icon.svg",
     apple: "/icon.jpg",
   },
   openGraph: {
     title: "food battle",
-    description: "compare food macros and find the healthiest option",
+    description: "compare food macros",
     images: ["/og-image.jpg"],
   },
   twitter: {
     card: "summary_large_image",
     title: "food battle",
-    description: "compare food macros and find the healthiest option",
+    description: "compare food macros",
     images: ["/og-image.jpg"],
   },
 };
