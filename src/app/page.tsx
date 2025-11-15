@@ -12,6 +12,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [basePortionSize, setBasePortionSize] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFoodQuery(e.target.value);
@@ -55,7 +56,10 @@ export default function Home() {
         const response = await fetch('/api/food', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ foodName: foodQuery }),
+          body: JSON.stringify({
+            foodName: foodQuery,
+            matchPortionSize: basePortionSize
+          }),
         });
 
         const data = await response.json();
@@ -69,6 +73,11 @@ export default function Home() {
             setError('failed to fetch food data. please try again.');
           }
           return;
+        }
+
+        // Set base portion size from first food
+        if (foodItems.length === 0 && data.portionSize) {
+          setBasePortionSize(data.portionSize);
         }
 
         const newFoodItems = [...foodItems, data];
@@ -101,6 +110,7 @@ export default function Home() {
     setFoodItems([]);
     setWinner(null);
     setFoodQuery('');
+    setBasePortionSize(null);
   };
 
   return (

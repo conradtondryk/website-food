@@ -53,6 +53,7 @@ function recordInvalidAttempt(clientId: string) {
 const FOOD_DATA_PROMPT = `you are a nutritional analysis expert. analyze the following food item and provide accurate nutritional information.
 
 food item: {FOOD_NAME}
+{PORTION_INSTRUCTION}
 
 IMPORTANT: if the input is NOT a valid food item (e.g., random words, objects, names, profanity, nonsense), respond with this exact JSON:
 {
@@ -63,14 +64,15 @@ IMPORTANT: if the input is NOT a valid food item (e.g., random words, objects, n
 otherwise, respond with ONLY a JSON object in this exact format:
 {
   "name": "food name",
+  "portionSize": "the portion size for these macros (e.g., '100g', '1 cup', '1 medium')",
   "macros": {
-    "calories": number (kcal per 100g),
-    "protein": number (grams per 100g),
-    "unsaturatedFat": number (grams per 100g),
-    "saturatedFat": number (grams per 100g),
-    "carbs": number (grams per 100g),
-    "sugars": number (grams per 100g),
-    "fibre": number (grams per 100g)
+    "calories": number (kcal per portion),
+    "protein": number (grams per portion),
+    "unsaturatedFat": number (grams per portion),
+    "saturatedFat": number (grams per portion),
+    "carbs": number (grams per portion),
+    "sugars": number (grams per portion),
+    "fibre": number (grams per portion)
   },
   "summary": {
     "pros": ["2-3 specific health benefits"],
@@ -79,7 +81,9 @@ otherwise, respond with ONLY a JSON object in this exact format:
 }
 
 requirements:
-- all values should be per 100g serving
+- extract portion size from the food name if specified (e.g., "100g chicken", "1 cup rice")
+- if no portion size specified, default to 100g
+- all macro values should match the specified portion size
 - be accurate and use real nutritional data
 - pros should highlight genuine nutritional benefits
 - cons should mention realistic concerns (allergens, sugar content, etc)
@@ -89,7 +93,7 @@ requirements:
 
 export async function POST(request: NextRequest) {
   try {
-    const { foodName } = await request.json();
+    const { foodName, matchPortionSize } = await request.json();
 
     if (!foodName || typeof foodName !== 'string') {
       return NextResponse.json(
@@ -110,7 +114,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Call Grok API with streaming
-    const prompt = FOOD_DATA_PROMPT.replace('{FOOD_NAME}', foodName);
+    const portionInstruction = matchPortionSize
+      ? `\nIMPORTANT: provide nutritional data for exactly ${matchPortionSize} of this food, not per 100g.`
+      : '';
+
+    const prompt = FOOD_DATA_PROMPT
+      .replace('{FOOD_NAME}', foodName)
+      .replace('{PORTION_INSTRUCTION}', portionInstruction);
     const stream = await xai.chat.completions.create({
       model: 'grok-4-fast',
       messages: [{ role: 'user', content: prompt }],

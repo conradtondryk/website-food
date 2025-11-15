@@ -8,9 +8,12 @@ export default function FoodCard({ food }: FoodCardProps) {
   return (
     <div className="w-full max-w-xs bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-4">
       {/* Food Name */}
-      <h2 className="text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100 mb-4">
+      <h2 className="text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100 mb-1">
         {food.name}
       </h2>
+      <p className="text-xs text-center text-zinc-500 dark:text-zinc-400 mb-4">
+        per {food.portionSize}
+      </p>
 
       {/* Macros Table */}
       <div className="mb-4">
