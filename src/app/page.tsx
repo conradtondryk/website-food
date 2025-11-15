@@ -10,6 +10,7 @@ export default function Home() {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [winner, setWinner] = useState<Winner | null>(null);
   const [loading, setLoading] = useState(false);
+  const [comparing, setComparing] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFoodQuery(e.target.value);
@@ -52,13 +53,6 @@ export default function Home() {
         const foodData = await fetchFoodData(foodQuery);
         const newFoodItems = [...foodItems, foodData];
         setFoodItems(newFoodItems);
-
-        // If we have 2+ foods, get winner comparison
-        if (newFoodItems.length >= 2) {
-          const winnerData = await fetchWinner(newFoodItems);
-          setWinner(winnerData);
-        }
-
         setFoodQuery('');
       } catch (error) {
         console.error('Error fetching food data:', error);
@@ -66,6 +60,20 @@ export default function Home() {
       } finally {
         setLoading(false);
       }
+    }
+  };
+
+  const handleCompare = async () => {
+    if (foodItems.length < 2 || comparing) return;
+
+    setComparing(true);
+    try {
+      const winnerData = await fetchWinner(foodItems);
+      setWinner(winnerData);
+    } catch (error) {
+      console.error('Error comparing foods:', error);
+    } finally {
+      setComparing(false);
     }
   };
 
@@ -138,7 +146,12 @@ export default function Home() {
         {/* Winner section - fixed on right */}
         {foodItems.length > 0 && (
           <div className="flex-shrink-0">
-            <WinnerCard winner={winner} />
+            <WinnerCard
+              winner={winner}
+              onCompare={handleCompare}
+              comparing={comparing}
+              canCompare={foodItems.length >= 2}
+            />
           </div>
         )}
       </main>
