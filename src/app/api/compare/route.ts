@@ -45,22 +45,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call Grok API
+    // Call Grok API with streaming
     const foodsJson = JSON.stringify(foods, null, 2);
     const prompt = COMPARISON_PROMPT.replace('{FOODS_JSON}', foodsJson);
 
-    const completion = await xai.chat.completions.create({
+    const stream = await xai.chat.completions.create({
       model: 'grok-4-fast',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
+      stream: true,
     });
 
-    const responseText = completion.choices[0].message.content;
-    if (!responseText) {
+    let fullResponse = '';
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || '';
+      fullResponse += content;
+    }
+
+    if (!fullResponse) {
       throw new Error('No response from Grok');
     }
 
-    const winner = JSON.parse(responseText);
+    const winner = JSON.parse(fullResponse);
 
     return NextResponse.json(winner);
   } catch (error) {
