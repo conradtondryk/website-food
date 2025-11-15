@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Call Grok API
     const prompt = FOOD_DATA_PROMPT.replace('{FOOD_NAME}', foodName);
     const completion = await xai.chat.completions.create({
-      model: 'grok-4-latest',
+      model: 'grok-4-fast',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
     });
