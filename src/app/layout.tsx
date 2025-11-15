@@ -22,13 +22,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "food battle",
     description: "compare food macros",
-    images: ["/og-image.jpg"],
+    images: ["/og-image.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "food battle",
     description: "compare food macros",
-    images: ["/og-image.jpg"],
+    images: ["/og-image.png"],
   },
 };
 
