@@ -9,43 +9,63 @@ export default function Home() {
   const [foodQuery, setFoodQuery] = useState('');
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [winner, setWinner] = useState<Winner | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFoodQuery(e.target.value);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && foodQuery.trim()) {
-      // TODO: Replace this mock data with AI API call
-      const mockFoodItem: FoodItem = {
-        name: foodQuery,
-        macros: {
-          calories: 0,
-          protein: 0,
-          unsaturatedFat: 0,
-          saturatedFat: 0,
-          carbs: 0,
-          sugars: 0,
-          fibre: 0,
-        },
-        summary: {
-          pros: ['awaiting ai response...'],
-          cons: ['awaiting ai response...'],
-        },
-      };
+  const fetchFoodData = async (foodName: string): Promise<FoodItem> => {
+    const response = await fetch('/api/food', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ foodName }),
+    });
 
-      const newFoodItems = [...foodItems, mockFoodItem];
-      setFoodItems(newFoodItems);
+    if (!response.ok) {
+      throw new Error('Failed to fetch food data');
+    }
 
-      // TODO: Replace with AI API call to determine winner
-      if (newFoodItems.length >= 2) {
-        setWinner({
-          foodName: mockFoodItem.name,
-          reason: 'awaiting ai comparison...',
-        });
+    return response.json();
+  };
+
+  const fetchWinner = async (foods: FoodItem[]): Promise<Winner> => {
+    const response = await fetch('/api/compare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ foods }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to compare foods');
+    }
+
+    return response.json();
+  };
+
+  const handleKeyPress = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && foodQuery.trim() && !loading) {
+      setLoading(true);
+
+      try {
+        // Fetch food data from AI API
+        const foodData = await fetchFoodData(foodQuery);
+        const newFoodItems = [...foodItems, foodData];
+        setFoodItems(newFoodItems);
+
+        // If we have 2+ foods, get winner comparison
+        if (newFoodItems.length >= 2) {
+          const winnerData = await fetchWinner(newFoodItems);
+          setWinner(winnerData);
+        }
+
+        setFoodQuery('');
+      } catch (error) {
+        console.error('Error fetching food data:', error);
+        // TODO: Show error message to user
+      } finally {
+        setLoading(false);
       }
-
-      setFoodQuery('');
     }
   };
 
@@ -73,8 +93,12 @@ export default function Home() {
               onKeyPress={handleKeyPress}
               placeholder="enter food item..."
               autoFocus
-              className="flex-1 px-4 py-3 text-base rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+              disabled={loading}
+              className="flex-1 px-4 py-3 text-base rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             />
+            {loading && (
+              <div className="animate-spin h-5 w-5 border-2 border-zinc-300 dark:border-zinc-600 border-t-blue-500 rounded-full"></div>
+            )}
             {foodItems.length > 0 && (
               <button
                 onClick={handleReset}
