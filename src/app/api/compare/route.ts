@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     const mockWinner = {
       foodName: winnerFood.name,
-      reason: `${winnerFood.name} has the best overall nutritional profile with higher protein and fiber content while maintaining lower saturated fat levels.`,
+      reason: `${winnerFood.name} has the best overall nutritional profile with higher protein and fiber content while maintaining lower saturated fat levels`,
     };
 
     return NextResponse.json(mockWinner);

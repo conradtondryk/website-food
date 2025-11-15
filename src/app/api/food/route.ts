@@ -73,12 +73,12 @@ export async function POST(request: NextRequest) {
       },
       summary: {
         pros: [
-          'High in protein',
-          'Good source of vitamins',
+          'high in protein',
+          'good source of vitamins',
         ],
         cons: [
-          'May contain allergens',
-          'High in sodium',
+          'may contain allergens',
+          'high in sodium',
         ],
       },
     };
