@@ -11,9 +11,11 @@ export default function Home() {
   const [winner, setWinner] = useState<Winner | null>(null);
   const [loading, setLoading] = useState(false);
   const [comparing, setComparing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFoodQuery(e.target.value);
+    setError(null);
   };
 
   const fetchFoodData = async (foodName: string): Promise<FoodItem> => {
@@ -47,16 +49,34 @@ export default function Home() {
   const handleKeyPress = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && foodQuery.trim() && !loading) {
       setLoading(true);
+      setError(null);
 
       try {
-        // Fetch food data from AI API
-        const foodData = await fetchFoodData(foodQuery);
-        const newFoodItems = [...foodItems, foodData];
+        const response = await fetch('/api/food', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ foodName: foodQuery }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (data.error === 'invalid_food') {
+            setError('please enter a valid food item.');
+          } else if (data.error === 'rate_limited') {
+            setError(data.message);
+          } else {
+            setError('failed to fetch food data. please try again.');
+          }
+          return;
+        }
+
+        const newFoodItems = [...foodItems, data];
         setFoodItems(newFoodItems);
         setFoodQuery('');
       } catch (error) {
         console.error('Error fetching food data:', error);
-        // TODO: Show error message to user
+        setError('failed to fetch food data. please try again.');
       } finally {
         setLoading(false);
       }
@@ -93,6 +113,11 @@ export default function Home() {
               ? 'find your food macros. simply search for your food item to begin.'
               : 'select another food to compare to.'}
           </h1>
+          {error && (
+            <div className="max-w-md mx-auto mb-3 px-4 py-2 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+            </div>
+          )}
           <div className="max-w-md mx-auto flex gap-2 items-center">
             <input
               type="text"

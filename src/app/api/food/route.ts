@@ -6,11 +6,61 @@ const xai = new OpenAI({
   baseURL: 'https://api.x.ai/v1',
 });
 
+// Rate limiting for invalid food attempts
+const invalidAttempts = new Map<string, { count: number; timestamp: number }>();
+const MAX_INVALID_ATTEMPTS = 3;
+const TIMEOUT_DURATION = 5 * 60 * 1000; // 5 minutes
+
+function getClientId(request: NextRequest): string {
+  return request.headers.get('x-forwarded-for') || 'unknown';
+}
+
+function checkRateLimit(clientId: string): { allowed: boolean; message?: string } {
+  const now = Date.now();
+  const attempt = invalidAttempts.get(clientId);
+
+  if (attempt) {
+    const timeSinceFirst = now - attempt.timestamp;
+
+    if (timeSinceFirst > TIMEOUT_DURATION) {
+      invalidAttempts.delete(clientId);
+      return { allowed: true };
+    }
+
+    if (attempt.count >= MAX_INVALID_ATTEMPTS) {
+      const remainingTime = Math.ceil((TIMEOUT_DURATION - timeSinceFirst) / 1000 / 60);
+      return {
+        allowed: false,
+        message: `too many invalid attempts. please try again in ${remainingTime} minutes.`
+      };
+    }
+  }
+
+  return { allowed: true };
+}
+
+function recordInvalidAttempt(clientId: string) {
+  const now = Date.now();
+  const attempt = invalidAttempts.get(clientId);
+
+  if (attempt && now - attempt.timestamp <= TIMEOUT_DURATION) {
+    attempt.count += 1;
+  } else {
+    invalidAttempts.set(clientId, { count: 1, timestamp: now });
+  }
+}
+
 const FOOD_DATA_PROMPT = `you are a nutritional analysis expert. analyze the following food item and provide accurate nutritional information.
 
 food item: {FOOD_NAME}
 
-respond with ONLY a JSON object in this exact format:
+IMPORTANT: if the input is NOT a valid food item (e.g., random words, objects, names, profanity, nonsense), respond with this exact JSON:
+{
+  "error": "invalid_food",
+  "message": "please enter a valid food item"
+}
+
+otherwise, respond with ONLY a JSON object in this exact format:
 {
   "name": "food name",
   "macros": {
@@ -48,6 +98,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check rate limit
+    const clientId = getClientId(request);
+    const rateCheck = checkRateLimit(clientId);
+
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: 'rate_limited', message: rateCheck.message },
+        { status: 429 }
+      );
+    }
+
     // Call Grok API with streaming
     const prompt = FOOD_DATA_PROMPT.replace('{FOOD_NAME}', foodName);
     const stream = await xai.chat.completions.create({
@@ -69,6 +130,15 @@ export async function POST(request: NextRequest) {
     }
 
     const foodData = JSON.parse(fullResponse);
+
+    // Check if AI detected invalid food
+    if (foodData.error === 'invalid_food') {
+      recordInvalidAttempt(clientId);
+      return NextResponse.json(
+        { error: 'invalid_food', message: foodData.message },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json(foodData);
   } catch (error) {
