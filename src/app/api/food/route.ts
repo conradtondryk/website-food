@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Call Grok API
     const prompt = FOOD_DATA_PROMPT.replace('{FOOD_NAME}', foodName);
     const completion = await xai.chat.completions.create({
-      model: 'grok-beta',
+      model: 'grok-4-latest',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
     });
@@ -64,34 +64,6 @@ export async function POST(request: NextRequest) {
     const foodData = JSON.parse(responseText);
 
     return NextResponse.json(foodData);
-  } catch (error) {
-    console.error('Error fetching food data:', error);
-
-    // Fallback to mock data if API fails
-    const mockData = {
-      name: foodName,
-      macros: {
-        calories: Math.floor(Math.random() * 500),
-        protein: Math.floor(Math.random() * 50),
-        unsaturatedFat: Math.floor(Math.random() * 20),
-        saturatedFat: Math.floor(Math.random() * 10),
-        carbs: Math.floor(Math.random() * 60),
-        sugars: Math.floor(Math.random() * 30),
-        fibre: Math.floor(Math.random() * 15),
-      },
-      summary: {
-        pros: [
-          'high in protein',
-          'good source of vitamins',
-        ],
-        cons: [
-          'may contain allergens',
-          'high in sodium',
-        ],
-      },
-    };
-
-    return NextResponse.json(mockData);
   } catch (error) {
     console.error('Error fetching food data:', error);
     return NextResponse.json(

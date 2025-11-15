@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const prompt = COMPARISON_PROMPT.replace('{FOODS_JSON}', foodsJson);
 
     const completion = await xai.chat.completions.create({
-      model: 'grok-beta',
+      model: 'grok-4-latest',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
     });
@@ -63,18 +63,6 @@ export async function POST(request: NextRequest) {
     const winner = JSON.parse(responseText);
 
     return NextResponse.json(winner);
-  } catch (error) {
-    console.error('Error comparing foods:', error);
-
-    // Fallback to mock data if API fails
-    const winnerFood = foods[Math.floor(Math.random() * foods.length)] as FoodItem;
-
-    const mockWinner = {
-      foodName: winnerFood.name,
-      reason: `${winnerFood.name} has the best overall nutritional profile with higher protein and fiber content while maintaining lower saturated fat levels`,
-    };
-
-    return NextResponse.json(mockWinner);
   } catch (error) {
     console.error('Error comparing foods:', error);
     return NextResponse.json(
