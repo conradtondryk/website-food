@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FoodItem } from '@/app/types';
+import OpenAI from 'openai';
+
+const xai = new OpenAI({
+  apiKey: process.env.XAI_API_KEY,
+  baseURL: 'https://api.x.ai/v1',
+});
 
 const COMPARISON_PROMPT = `you are a nutritional comparison expert. analyze the following foods and determine which is the healthiest overall option.
 
@@ -39,25 +45,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Replace with actual AI API call to determine winner
-    // const foodsJson = JSON.stringify(foods, null, 2);
-    // const prompt = COMPARISON_PROMPT.replace('{FOODS_JSON}', foodsJson);
-    // const response = await fetch('AI_API_ENDPOINT', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${process.env.AI_API_KEY}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     model: 'MODEL_NAME',
-    //     messages: [{ role: 'user', content: prompt }],
-    //     temperature: 0.3,
-    //   }),
-    // });
-    // const data = await response.json();
-    // const winner = JSON.parse(data.choices[0].message.content);
+    // Call Grok API
+    const foodsJson = JSON.stringify(foods, null, 2);
+    const prompt = COMPARISON_PROMPT.replace('{FOODS_JSON}', foodsJson);
 
-    // Mock response for now - pick a random food as winner
+    const completion = await xai.chat.completions.create({
+      model: 'grok-beta',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+    });
+
+    const responseText = completion.choices[0].message.content;
+    if (!responseText) {
+      throw new Error('No response from Grok');
+    }
+
+    const winner = JSON.parse(responseText);
+
+    return NextResponse.json(winner);
+  } catch (error) {
+    console.error('Error comparing foods:', error);
+
+    // Fallback to mock data if API fails
     const winnerFood = foods[Math.floor(Math.random() * foods.length)] as FoodItem;
 
     const mockWinner = {

@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+
+const xai = new OpenAI({
+  apiKey: process.env.XAI_API_KEY,
+  baseURL: 'https://api.x.ai/v1',
+});
 
 const FOOD_DATA_PROMPT = `you are a nutritional analysis expert. analyze the following food item and provide accurate nutritional information.
 
@@ -42,24 +48,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Replace with actual AI API call
-    // const prompt = FOOD_DATA_PROMPT.replace('{FOOD_NAME}', foodName);
-    // const response = await fetch('AI_API_ENDPOINT', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${process.env.AI_API_KEY}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     model: 'MODEL_NAME',
-    //     messages: [{ role: 'user', content: prompt }],
-    //     temperature: 0.3,
-    //   }),
-    // });
-    // const data = await response.json();
-    // const foodData = JSON.parse(data.choices[0].message.content);
+    // Call Grok API
+    const prompt = FOOD_DATA_PROMPT.replace('{FOOD_NAME}', foodName);
+    const completion = await xai.chat.completions.create({
+      model: 'grok-beta',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+    });
 
-    // Mock response for now
+    const responseText = completion.choices[0].message.content;
+    if (!responseText) {
+      throw new Error('No response from Grok');
+    }
+
+    const foodData = JSON.parse(responseText);
+
+    return NextResponse.json(foodData);
+  } catch (error) {
+    console.error('Error fetching food data:', error);
+
+    // Fallback to mock data if API fails
     const mockData = {
       name: foodName,
       macros: {
