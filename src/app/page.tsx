@@ -169,10 +169,10 @@ export default function Home() {
 
       {/* Main content area */}
       <main className="flex-1 flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-4 sm:py-6">
-        {/* Food cards - scrollable */}
-        <div className="flex-1 flex gap-4 sm:gap-6 overflow-x-auto pb-4">
+        {/* Food cards - scrollable horizontally on mobile */}
+        <div className="flex-1 flex gap-3 sm:gap-6 overflow-x-auto pb-4">
           {foodItems.map((food, index) => (
-            <div key={index} className="flex-shrink-0 w-full sm:w-auto">
+            <div key={index} className="flex-shrink-0">
               <FoodCard food={food} />
             </div>
           ))}

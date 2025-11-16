@@ -6,59 +6,69 @@ interface FoodCardProps {
 
 export default function FoodCard({ food }: FoodCardProps) {
   return (
-    <div className="w-full sm:w-80 sm:max-w-xs bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-4">
+    <div className="w-40 sm:w-80 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-2 sm:p-4">
       {/* Food Name */}
-      <h2 className="text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100 mb-1">
+      <h2 className="text-sm sm:text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100 mb-0.5 sm:mb-1">
         {food.name}
       </h2>
-      <p className="text-xs text-center text-zinc-500 dark:text-zinc-400 mb-4">
+      <p className="text-[10px] sm:text-xs text-center text-zinc-500 dark:text-zinc-400 mb-2 sm:mb-4">
         per {food.portionSize}
       </p>
 
-      {/* Macros Table */}
-      <div className="mb-4">
-        <h3 className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">
-          nutritional information
+      {/* Macros Table - Compact on mobile */}
+      <div className="mb-2 sm:mb-4">
+        <h3 className="text-[10px] sm:text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1 sm:mb-2">
+          nutrition
         </h3>
-        <table className="w-full text-xs">
+        <table className="w-full text-[10px] sm:text-xs">
           <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
             <tr>
-              <td className="py-1.5 text-zinc-700 dark:text-zinc-300">calories</td>
-              <td className="py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {food.macros.calories} kcal
+              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">cal</td>
+              <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
+                {food.macros.calories}
               </td>
             </tr>
             <tr>
-              <td className="py-1.5 text-zinc-700 dark:text-zinc-300">protein</td>
-              <td className="py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
+              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">pro</td>
+              <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
                 {food.macros.protein}g
               </td>
             </tr>
-            <tr>
+            <tr className="sm:table-row hidden">
               <td className="py-1.5 text-zinc-700 dark:text-zinc-300">unsaturated fat</td>
               <td className="py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
                 {food.macros.unsaturatedFat}g
               </td>
             </tr>
-            <tr>
+            <tr className="sm:table-row hidden">
               <td className="py-1.5 text-zinc-700 dark:text-zinc-300">saturated fat</td>
               <td className="py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
                 {food.macros.saturatedFat}g
               </td>
             </tr>
             <tr>
-              <td className="py-1.5 text-zinc-700 dark:text-zinc-300">carbs</td>
-              <td className="py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
+              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">
+                <span className="sm:hidden">fat</span>
+                <span className="hidden sm:inline">carbs</span>
+              </td>
+              <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
+                <span className="sm:hidden">{(food.macros.unsaturatedFat + food.macros.saturatedFat).toFixed(1)}g</span>
+                <span className="hidden sm:inline">{food.macros.carbs}g</span>
+              </td>
+            </tr>
+            <tr className="sm:hidden">
+              <td className="py-0.5 text-zinc-700 dark:text-zinc-300">carb</td>
+              <td className="py-0.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
                 {food.macros.carbs}g
               </td>
             </tr>
-            <tr>
+            <tr className="sm:table-row hidden">
               <td className="py-1.5 text-zinc-700 dark:text-zinc-300">sugars</td>
               <td className="py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
                 {food.macros.sugars}g
               </td>
             </tr>
-            <tr>
+            <tr className="sm:table-row hidden">
               <td className="py-1.5 text-zinc-700 dark:text-zinc-300">fibre</td>
               <td className="py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
                 {food.macros.fibre}g
@@ -68,8 +78,8 @@ export default function FoodCard({ food }: FoodCardProps) {
         </table>
       </div>
 
-      {/* Summary */}
-      <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3">
+      {/* Summary - Hidden on mobile, shown on tablet+ */}
+      <div className="hidden sm:block bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3">
         <h3 className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2">
           summary
         </h3>
