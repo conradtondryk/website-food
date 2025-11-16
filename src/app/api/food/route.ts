@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { getFoodByName, saveFoodToDatabase, mapDatabaseRowToFoodItem } from '@/lib/db';
 
 const xai = new OpenAI({
   apiKey: process.env.XAI_API_KEY,
@@ -94,6 +95,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const existingFood = await getFoodByName(foodName);
+    if (existingFood && !matchPortionSize) {
+      return NextResponse.json(mapDatabaseRowToFoodItem(existingFood));
+    }
+
     const clientId = getClientId(request);
     const rateCheck = checkRateLimit(clientId);
 
@@ -137,6 +143,14 @@ export async function POST(request: NextRequest) {
         { error: 'invalid_food', message: foodData.message },
         { status: 400 }
       );
+    }
+
+    if (!matchPortionSize) {
+      try {
+        await saveFoodToDatabase(foodData);
+      } catch (error) {
+        console.error('Error saving to database:', error);
+      }
     }
 
     return NextResponse.json(foodData);
