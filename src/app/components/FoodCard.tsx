@@ -67,6 +67,27 @@ export default function FoodCard({ food }: FoodCardProps) {
           </tbody>
         </table>
       </div>
+
+      {food.sourceUrl && (
+        <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+          <a
+            href={food.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[9px] sm:text-[10px] text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+          >
+            source: {food.source === 'usda' ? 'usda fooddata central' : 'ai generated'}
+          </a>
+        </div>
+      )}
+
+      {!food.sourceUrl && food.source === 'ai' && (
+        <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+          <span className="text-[9px] sm:text-[10px] text-zinc-400 dark:text-zinc-500">
+            source: ai generated
+          </span>
+        </div>
+      )}
     </div>
   );
 }

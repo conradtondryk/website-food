@@ -12,6 +12,8 @@ export interface FoodItem {
   name: string;
   portionSize: string;
   macros: FoodMacros;
+  source: 'usda' | 'ai';
+  sourceUrl?: string;
 }
 
 export interface Winner {
