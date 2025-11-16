@@ -20,11 +20,9 @@ consider these factors:
 - overall nutrient density
 - health benefits vs concerns
 
-respond with ONLY a JSON object in this exact format:
-{
-  "foodName": "name of winning food",
-  "reason": "brief explanation (2-3 sentences) of why this food wins, focusing on specific nutritional advantages"
-}
+respond in this EXACT format (text only, no JSON):
+WINNER: [name of winning food]
+REASON: [brief explanation (2-3 sentences) of why this food wins, focusing on specific nutritional advantages]
 
 requirements:
 - choose only ONE winner
@@ -32,7 +30,7 @@ requirements:
 - explanation should be specific and mention actual nutritional metrics
 - use lowercase for all text
 - keep explanation concise but informative
-- do not include any text outside the JSON object`;
+- do not include any extra text or formatting`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,7 +43,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call Grok API with streaming
     const foodsJson = JSON.stringify(foods, null, 2);
     const prompt = COMPARISON_PROMPT.replace('{FOODS_JSON}', foodsJson);
 
@@ -56,20 +53,36 @@ export async function POST(request: NextRequest) {
       stream: true,
     });
 
+    const encoder = new TextEncoder();
     let fullResponse = '';
 
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      fullResponse += content;
-    }
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            fullResponse += content;
 
-    if (!fullResponse) {
-      throw new Error('No response from Grok');
-    }
+            controller.enqueue(encoder.encode(content));
+          }
 
-    const winner = JSON.parse(fullResponse);
+          if (!fullResponse) {
+            throw new Error('No response from Grok');
+          }
 
-    return NextResponse.json(winner);
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(readableStream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      },
+    });
   } catch (error) {
     console.error('Error comparing foods:', error);
     return NextResponse.json(

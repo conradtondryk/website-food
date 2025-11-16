@@ -10,7 +10,7 @@ export interface FoodMacros {
 
 export interface FoodItem {
   name: string;
-  portionSize: string; // e.g., "100g", "1 cup", "1 medium"
+  portionSize: string;
   macros: FoodMacros;
 }
 

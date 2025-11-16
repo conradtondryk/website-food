@@ -6,10 +6,9 @@ const xai = new OpenAI({
   baseURL: 'https://api.x.ai/v1',
 });
 
-// Rate limiting for invalid food attempts
 const invalidAttempts = new Map<string, { count: number; timestamp: number }>();
 const MAX_INVALID_ATTEMPTS = 3;
-const TIMEOUT_DURATION = 5 * 60 * 1000; // 5 minutes
+const TIMEOUT_DURATION = 5 * 60 * 1000;
 
 function getClientId(request: NextRequest): string {
   return request.headers.get('x-forwarded-for') || 'unknown';
@@ -95,7 +94,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check rate limit
     const clientId = getClientId(request);
     const rateCheck = checkRateLimit(clientId);
 
@@ -106,7 +104,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call Grok API with streaming
     const portionInstruction = matchPortionSize
       ? `\nIMPORTANT: provide nutritional data for exactly ${matchPortionSize} of this food, not per 100g.`
       : '';
@@ -134,7 +131,6 @@ export async function POST(request: NextRequest) {
 
     const foodData = JSON.parse(fullResponse);
 
-    // Check if AI detected invalid food
     if (foodData.error === 'invalid_food') {
       recordInvalidAttempt(clientId);
       return NextResponse.json(

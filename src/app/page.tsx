@@ -33,7 +33,7 @@ export default function Home() {
     return response.json();
   };
 
-  const fetchWinner = async (foods: FoodItem[]): Promise<Winner> => {
+  const fetchWinner = async (foods: FoodItem[]): Promise<void> => {
     const response = await fetch('/api/compare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -44,7 +44,37 @@ export default function Home() {
       throw new Error('Failed to compare foods');
     }
 
-    return response.json();
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let currentWinner: Winner = { foodName: '', reason: '' };
+
+    if (!reader) {
+      throw new Error('No response body');
+    }
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      fullText += chunk;
+
+      const winnerMatch = fullText.match(/WINNER:\s*(.+?)(?:\n|$)/i);
+      const reasonMatch = fullText.match(/REASON:\s*(.+)/is);
+
+      if (winnerMatch) {
+        currentWinner.foodName = winnerMatch[1].trim();
+      }
+
+      if (reasonMatch) {
+        currentWinner.reason = reasonMatch[1].trim();
+      }
+
+      if (currentWinner.foodName) {
+        setWinner({ ...currentWinner });
+      }
+    }
   };
 
   const handleKeyPress = async (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -75,7 +105,6 @@ export default function Home() {
           return;
         }
 
-        // Set base portion size from first food
         if (foodItems.length === 0 && data.portionSize) {
           setBasePortionSize(data.portionSize);
         }
@@ -83,6 +112,9 @@ export default function Home() {
         const newFoodItems = [...foodItems, data];
         setFoodItems(newFoodItems);
         setFoodQuery('');
+        if (winner) {
+          setWinner(null);
+        }
       } catch (error) {
         console.error('Error fetching food data:', error);
         setError('failed to fetch food data. please try again.');
@@ -96,9 +128,9 @@ export default function Home() {
     if (foodItems.length < 2 || comparing) return;
 
     setComparing(true);
+    setWinner(null);
     try {
-      const winnerData = await fetchWinner(foodItems);
-      setWinner(winnerData);
+      await fetchWinner(foodItems);
     } catch (error) {
       console.error('Error comparing foods:', error);
     } finally {
