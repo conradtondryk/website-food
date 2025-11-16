@@ -9,7 +9,7 @@ interface WinnerCardProps {
 
 export default function WinnerCard({ winner, onCompare, comparing, canCompare }: WinnerCardProps) {
   return (
-    <div className="w-full max-w-sm bg-white dark:bg-zinc-800 rounded-lg shadow-lg border-2 border-green-500 dark:border-green-600 p-6">
+    <div className="w-full sm:w-96 sm:max-w-sm bg-white dark:bg-zinc-800 rounded-lg shadow-lg border-2 border-green-500 dark:border-green-600 p-6">
       <h2 className="text-xl font-semibold text-center text-zinc-900 dark:text-zinc-100 mb-6">
         who wins
       </h2>

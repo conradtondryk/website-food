@@ -6,7 +6,7 @@ interface FoodCardProps {
 
 export default function FoodCard({ food }: FoodCardProps) {
   return (
-    <div className="w-full max-w-xs bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-4">
+    <div className="w-full sm:w-80 sm:max-w-xs bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-4">
       {/* Food Name */}
       <h2 className="text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100 mb-1">
         {food.name}

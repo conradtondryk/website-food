@@ -116,7 +116,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black">
       {/* Top search bar */}
-      <header className="sticky top-0 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-700 px-8 py-4">
+      <header className="sticky top-0 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-700 px-4 sm:px-8 py-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-sm text-zinc-700 dark:text-zinc-300 text-center mb-3">
             {foodItems.length === 0
@@ -168,19 +168,19 @@ export default function Home() {
       </header>
 
       {/* Main content area */}
-      <main className="flex-1 flex gap-6 px-8 py-6">
+      <main className="flex-1 flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-4 sm:py-6">
         {/* Food cards - scrollable */}
-        <div className="flex-1 flex gap-6 overflow-x-auto">
+        <div className="flex-1 flex gap-4 sm:gap-6 overflow-x-auto pb-4">
           {foodItems.map((food, index) => (
-            <div key={index} className="flex-shrink-0">
+            <div key={index} className="flex-shrink-0 w-full sm:w-auto">
               <FoodCard food={food} />
             </div>
           ))}
         </div>
 
-        {/* Winner section - fixed on right */}
+        {/* Winner section - bottom on mobile, right on desktop */}
         {foodItems.length > 0 && (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-full lg:w-auto">
             <WinnerCard
               winner={winner}
               onCompare={handleCompare}
