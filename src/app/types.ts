@@ -8,16 +8,10 @@ export interface FoodMacros {
   fibre: number;
 }
 
-export interface FoodSummary {
-  pros: string[];
-  cons: string[];
-}
-
 export interface FoodItem {
   name: string;
   portionSize: string; // e.g., "100g", "1 cup", "1 medium"
   macros: FoodMacros;
-  summary: FoodSummary;
 }
 
 export interface Winner {

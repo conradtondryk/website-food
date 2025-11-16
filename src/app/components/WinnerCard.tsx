@@ -26,8 +26,8 @@ export default function WinnerCard({ winner, onCompare, comparing, canCompare }:
           </div>
         </div>
       ) : (
-        <div className="text-center py-4 sm:py-8">
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-3 sm:mb-4">
+        <div className="text-center py-2 sm:py-4">
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mb-2">
             {canCompare
               ? 'click compare to see which food wins.'
               : 'add at least two foods to compare.'}
@@ -36,7 +36,7 @@ export default function WinnerCard({ winner, onCompare, comparing, canCompare }:
             <button
               onClick={onCompare}
               disabled={comparing}
-              className="px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {comparing ? 'comparing...' : 'compare'}
             </button>

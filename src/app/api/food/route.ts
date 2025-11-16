@@ -73,10 +73,6 @@ otherwise, respond with ONLY a JSON object in this exact format:
     "carbs": number (grams per portion),
     "sugars": number (grams per portion),
     "fibre": number (grams per portion)
-  },
-  "summary": {
-    "pros": ["2-3 specific health benefits"],
-    "cons": ["2-3 specific health concerns or limitations"]
   }
 }
 
@@ -85,9 +81,6 @@ requirements:
 - if no portion size specified, default to 100g
 - all macro values should match the specified portion size
 - be accurate and use real nutritional data
-- pros should highlight genuine nutritional benefits
-- cons should mention realistic concerns (allergens, sugar content, etc)
-- keep pros and cons concise (one sentence each)
 - use lowercase for all text except numbers
 - do not include any text outside the JSON object`;
 
