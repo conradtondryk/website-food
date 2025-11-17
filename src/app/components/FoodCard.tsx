@@ -2,9 +2,10 @@ import { FoodItem } from '../types';
 
 interface FoodCardProps {
   food: FoodItem;
+  onPriceChange?: (price: number | undefined) => void;
 }
 
-export default function FoodCard({ food }: FoodCardProps) {
+export default function FoodCard({ food, onPriceChange }: FoodCardProps) {
   return (
     <div className="w-40 sm:w-80 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-2 sm:p-4">
       {/* Food Name */}
@@ -35,13 +36,13 @@ export default function FoodCard({ food }: FoodCardProps) {
               </td>
             </tr>
             <tr>
-              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">unsaturated fat</td>
+              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">fat</td>
               <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {food.macros.unsaturatedFat}g
+                {(food.macros.unsaturatedFat + food.macros.saturatedFat).toFixed(2)}g
               </td>
             </tr>
             <tr>
-              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">saturated fat</td>
+              <td className="py-0.5 sm:py-1.5 pl-2 text-zinc-600 dark:text-zinc-400 text-[9px] sm:text-[11px]">of which saturates</td>
               <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
                 {food.macros.saturatedFat}g
               </td>
@@ -53,7 +54,7 @@ export default function FoodCard({ food }: FoodCardProps) {
               </td>
             </tr>
             <tr>
-              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">sugars</td>
+              <td className="py-0.5 sm:py-1.5 pl-2 text-zinc-600 dark:text-zinc-400 text-[9px] sm:text-[11px]">of which sugars</td>
               <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
                 {food.macros.sugars}g
               </td>

@@ -14,6 +14,7 @@ export interface FoodItem {
   macros: FoodMacros;
   source: 'usda' | 'ai';
   sourceUrl?: string;
+  price?: number; // Price per 100g
 }
 
 export interface Winner {

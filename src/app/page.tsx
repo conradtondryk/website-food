@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import FoodCard from './components/FoodCard';
 import WinnerCard from './components/WinnerCard';
+import CategoryChart from './components/CategoryChart';
 import { FoodItem, Winner } from './types';
 
 export default function Home() {
@@ -13,6 +14,7 @@ export default function Home() {
   const [comparing, setComparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [basePortionSize, setBasePortionSize] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'chart'>('cards');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFoodQuery(e.target.value);
@@ -144,6 +146,12 @@ export default function Home() {
     setBasePortionSize(null);
   };
 
+  const handlePriceChange = (index: number, price: number | undefined) => {
+    const newFoodItems = [...foodItems];
+    newFoodItems[index] = { ...newFoodItems[index], price };
+    setFoodItems(newFoodItems);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black">
       {/* Top search bar */}
@@ -199,27 +207,66 @@ export default function Home() {
       </header>
 
       {/* Main content area */}
-      <main className="flex-1 flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-4 sm:py-6">
-        {/* Food cards - scrollable horizontally on mobile */}
-        <div className="flex-1 flex gap-3 sm:gap-6 overflow-x-auto pb-4">
-          {foodItems.map((food, index) => (
-            <div key={index} className="flex-shrink-0">
-              <FoodCard food={food} />
+      <main className="flex-1 flex flex-col gap-4 sm:gap-6 px-4 sm:px-8 py-4 sm:py-6">
+        {/* View toggle - only show when 2+ foods */}
+        {foodItems.length >= 2 && (
+          <div className="flex justify-center">
+            <div className="inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-1">
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                  viewMode === 'cards'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+                }`}
+              >
+                Cards
+              </button>
+              <button
+                onClick={() => setViewMode('chart')}
+                className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                  viewMode === 'chart'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+                }`}
+              >
+                Chart
+              </button>
             </div>
-          ))}
-        </div>
-
-        {/* Winner section - bottom on mobile, right on desktop */}
-        {foodItems.length > 0 && (
-          <div className="flex-shrink-0 w-full lg:w-auto">
-            <WinnerCard
-              winner={winner}
-              onCompare={handleCompare}
-              comparing={comparing}
-              canCompare={foodItems.length >= 2}
-            />
           </div>
         )}
+
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
+          {/* Food cards or chart - scrollable horizontally on mobile */}
+          <div className="flex-1 flex gap-3 sm:gap-6 overflow-x-auto pb-4 min-h-[400px] items-start">
+            {viewMode === 'cards' ? (
+              foodItems.map((food, index) => (
+                <div key={index} className="flex-shrink-0">
+                  <FoodCard
+                    food={food}
+                    onPriceChange={(price) => handlePriceChange(index, price)}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="w-full">
+                <CategoryChart foods={foodItems} />
+              </div>
+            )}
+          </div>
+
+          {/* Winner section - bottom on mobile, right on desktop */}
+          {foodItems.length > 0 && (
+            <div className="flex-shrink-0 w-full lg:w-auto">
+              <WinnerCard
+                winner={winner}
+                onCompare={handleCompare}
+                comparing={comparing}
+                canCompare={foodItems.length >= 2}
+              />
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
