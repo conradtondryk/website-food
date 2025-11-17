@@ -46,24 +46,28 @@ export async function searchUSDAFood(query: string) {
       f.description.toLowerCase() === `${queryLower}, fresh`
     );
 
-    // Match where query is complete word at start (e.g., "rice" matches "rice, white" but not "rice dressing")
-    const exactWordMatch = data.foods.find((f: any) => {
+    // Match with comma (descriptors like "rice, white" or "steak, raw")
+    const commaMatch = data.foods.find((f: any) => {
       const desc = f.description.toLowerCase();
-      return desc === queryLower || desc.startsWith(`${queryLower},`) || desc.startsWith(`${queryLower} `);
+      return desc.startsWith(`${queryLower},`);
     });
 
-    // Raw food that starts with exact query word
+    // Raw food with comma
     const rawFood = data.foods.find((f: any) => {
       const desc = f.description.toLowerCase();
-      return (desc === queryLower || desc.startsWith(`${queryLower},`) || desc.startsWith(`${queryLower} `)) &&
-        desc.includes('raw');
+      return desc.startsWith(`${queryLower},`) && desc.includes('raw');
     });
 
-    // Fresh food that starts with exact query word
+    // Fresh food with comma
     const freshFood = data.foods.find((f: any) => {
       const desc = f.description.toLowerCase();
-      return (desc === queryLower || desc.startsWith(`${queryLower},`) || desc.startsWith(`${queryLower} `)) &&
-        desc.includes('fresh');
+      return desc.startsWith(`${queryLower},`) && desc.includes('fresh');
+    });
+
+    // Match with space (less preferred, might be compound like "steak sauce")
+    const spaceMatch = data.foods.find((f: any) => {
+      const desc = f.description.toLowerCase();
+      return desc.startsWith(`${queryLower} `);
     });
 
     // Fallback: any match that starts with query
@@ -71,7 +75,7 @@ export async function searchUSDAFood(query: string) {
       f.description.toLowerCase().startsWith(queryLower)
     );
 
-    const food = exactMatch || rawFood || freshFood || exactWordMatch || startsWithMatch || data.foods[0];
+    const food = exactMatch || rawFood || freshFood || commaMatch || spaceMatch || startsWithMatch || data.foods[0];
     return mapUSDAToFoodData(food);
   } catch (error) {
     console.error('Error fetching from USDA:', error);
