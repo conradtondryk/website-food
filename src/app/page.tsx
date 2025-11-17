@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import FoodCard from './components/FoodCard';
 import WinnerCard from './components/WinnerCard';
 import CategoryChart from './components/CategoryChart';
@@ -15,6 +15,50 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [basePortionSize, setBasePortionSize] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'chart'>('cards');
+  const [suggestions, setSuggestions] = useState<Array<{ displayName: string; originalName: string }>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    if (foodQuery.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch('/api/food/suggestions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ foodName: foodQuery.trim() }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSuggestions(data.suggestions || []);
+          setShowSuggestions(true);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [foodQuery]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFoodQuery(e.target.value);
@@ -79,8 +123,60 @@ export default function Home() {
     }
   };
 
+  const handleSuggestionClick = async (suggestion: { displayName: string; originalName: string }) => {
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setFoodQuery('');
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/food', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          foodName: suggestion.originalName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error === 'invalid_food') {
+          setError('please enter a valid food item.');
+        } else if (data.error === 'rate_limited') {
+          setError(data.message);
+        } else {
+          setError('failed to fetch food data. please try again.');
+        }
+        return;
+      }
+
+      if (foodItems.length === 0 && data.portionSize) {
+        setBasePortionSize(data.portionSize);
+      }
+
+      const newFoodItems = [...foodItems, data];
+      setFoodItems(newFoodItems);
+      if (winner) {
+        setWinner(null);
+      }
+    } catch (error) {
+      console.error('Error fetching food data:', error);
+      setError('failed to fetch food data. please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleKeyPress = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && foodQuery.trim() && !loading) {
+      // If there are suggestions, select the first one
+      if (suggestions.length > 0) {
+        handleSuggestionClick(suggestions[0]);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
@@ -113,6 +209,8 @@ export default function Home() {
         const newFoodItems = [...foodItems, data];
         setFoodItems(newFoodItems);
         setFoodQuery('');
+        setSuggestions([]);
+        setShowSuggestions(false);
         if (winner) {
           setWinner(null);
         }
@@ -167,40 +265,57 @@ export default function Home() {
               <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           )}
-          <div className="max-w-md mx-auto flex gap-2 items-center">
-            <input
-              type="text"
-              value={foodQuery}
-              onChange={handleInputChange}
-              onKeyPress={handleKeyPress}
-              placeholder="enter food item..."
-              autoFocus
-              disabled={loading}
-              className="flex-1 px-4 py-3 text-base rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-            {loading && (
-              <div className="animate-spin h-5 w-5 border-2 border-zinc-300 dark:border-zinc-600 border-t-blue-500 rounded-full"></div>
-            )}
-            {foodItems.length > 0 && (
-              <button
-                onClick={handleReset}
-                className="p-3 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                title="reset"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+          <div className="max-w-md mx-auto relative">
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                value={foodQuery}
+                onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
+                placeholder="enter food item..."
+                autoFocus
+                disabled={loading}
+                className="flex-1 px-4 py-3 text-base rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              {loading && (
+                <div className="animate-spin h-5 w-5 border-2 border-zinc-300 dark:border-zinc-600 border-t-blue-500 rounded-full"></div>
+              )}
+              {foodItems.length > 0 && (
+                <button
+                  onClick={handleReset}
+                  className="p-3 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                  title="reset"
                 >
-                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                </svg>
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Suggestions dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-lg shadow-lg overflow-hidden z-20">
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full px-4 py-3 text-left text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700 last:border-b-0"
+                  >
+                    {suggestion.displayName}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         </div>

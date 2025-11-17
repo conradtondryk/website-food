@@ -21,6 +21,106 @@ interface USDASearchResult {
   totalHits: number;
 }
 
+export async function searchUSDAFoodSuggestions(query: string): Promise<Array<{ displayName: string; originalName: string }>> {
+  try {
+    const response = await fetch(
+      `${USDA_API_URL}/foods/search?query=${encodeURIComponent(query)}&pageSize=50&dataType=Survey (FNDDS)&api_key=${USDA_API_KEY}`
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data: USDASearchResult = await response.json();
+
+    if (!data.foods || data.foods.length === 0) {
+      return [];
+    }
+
+    const queryLower = query.toLowerCase().trim();
+
+    const cleanName = (description: string): string => {
+      let name = description.toLowerCase();
+
+      // Remove all "ns" (not specified) qualifiers
+      name = name.replace(/, nfs$/g, '');
+      name = name.replace(/, ns as to [^,]+/g, '');
+      name = name.replace(/, as ingredient$/g, '');
+
+      // Simplify cooking methods
+      name = name.replace(/, cooked/g, '');
+      name = name.replace(/, raw/g, ' (raw)');
+      name = name.replace(/, fresh/g, ' (fresh)');
+
+      // For items starting with the query, rearrange to be more natural
+      if (name.startsWith(`${queryLower},`)) {
+        const parts = name.split(',').map(p => p.trim());
+        if (parts.length >= 2 && parts[1].length < 20 && !parts[1].includes(' ')) {
+          // "rice, white" -> "white rice"
+          name = `${parts[1]} ${parts[0]}`;
+        } else {
+          // Just remove the first comma for complex descriptions
+          name = name.replace(`${queryLower}, `, `${queryLower} `);
+        }
+      }
+
+      return name.trim();
+    };
+
+    // Score each result by relevance
+    const scored = data.foods.map((f: any) => {
+      const desc = f.description.toLowerCase();
+      let score = 0;
+
+      // Skip compound foods (sauce, dressing, etc) unless exact match
+      const compoundFoodWords = ['sauce', 'dressing', 'soup', 'salad', 'sandwich', 'burger', 'pizza', 'cake', 'pie', 'cookie', 'bread', 'cracker', 'chip'];
+      const isCompoundFood = compoundFoodWords.some(word => {
+        const regex = new RegExp(`^${queryLower}\\s+${word}\\b`, 'i');
+        return regex.test(desc);
+      });
+
+      if (isCompoundFood && desc !== queryLower) {
+        score -= 500; // Heavy penalty for compound foods
+      }
+
+      // Exact match gets highest score
+      if (desc === queryLower) score += 1000;
+
+      // Starts with query
+      if (desc.startsWith(`${queryLower},`)) score += 100;
+      if (desc.startsWith(`${queryLower} `)) score += 90;
+
+      // Contains query in comma-separated part
+      if (desc.includes(`, ${queryLower},`)) score += 80;
+
+      // Shorter names are generally better (less specific)
+      score -= desc.length * 0.1;
+
+      // Penalize overly specific items
+      if (desc.includes('with ')) score -= 20;
+      if (desc.includes('made with')) score -= 30;
+      if (desc.includes('flavored')) score -= 15;
+
+      return { food: f, score, cleanedName: cleanName(f.description), originalName: f.description };
+    });
+
+    // Sort by score and remove duplicates
+    scored.sort((a, b) => b.score - a.score);
+
+    const seen = new Set<string>();
+    const unique = scored.filter(item => {
+      if (seen.has(item.cleanedName)) return false;
+      seen.add(item.cleanedName);
+      return true;
+    });
+
+    return unique.slice(0, 5).map(item => ({ displayName: item.cleanedName, originalName: item.originalName }));
+  } catch (error) {
+    console.error('Error fetching USDA suggestions:', error);
+    return [];
+  }
+}
+
 export async function searchUSDAFood(query: string) {
   try {
     const response = await fetch(
@@ -109,14 +209,26 @@ function mapUSDAToFoodData(usdaFood: USDAFood) {
   const fibre = getNutrientValue([1079]) * scaleFactor;
 
   const formatName = (description: string): string => {
-    const lower = description.toLowerCase();
-    const parts = lower.split(',').map(p => p.trim());
+    let name = description.toLowerCase();
 
-    if (parts.length === 2 && (parts[1] === 'raw' || parts[1] === 'fresh')) {
-      return `${parts[0]} (${parts[1]})`;
+    // Remove all "ns" (not specified) qualifiers
+    name = name.replace(/, nfs$/g, '');
+    name = name.replace(/, ns as to [^,]+/g, '');
+    name = name.replace(/, as ingredient$/g, '');
+
+    // Simplify cooking methods
+    name = name.replace(/, cooked/g, '');
+    name = name.replace(/, raw/g, ' (raw)');
+    name = name.replace(/, fresh/g, ' (fresh)');
+
+    // For items with comma, rearrange to be more natural
+    const parts = name.split(',').map(p => p.trim());
+    if (parts.length >= 2 && parts[1].length < 20 && !parts[1].includes(' ')) {
+      // "rice, white" -> "white rice"
+      name = `${parts[1]} ${parts[0]}`;
     }
 
-    return lower;
+    return name.trim();
   };
 
   return {
