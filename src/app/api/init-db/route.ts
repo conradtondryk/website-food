@@ -8,7 +8,11 @@ export async function GET() {
   } catch (error) {
     console.error('Failed to initialize database:', error);
     return NextResponse.json(
-      { error: 'Failed to initialize database' },
+      {
+        error: 'Failed to initialize database',
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
