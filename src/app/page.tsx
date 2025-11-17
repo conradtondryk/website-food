@@ -107,7 +107,7 @@ export default function Home() {
       fullText += chunk;
 
       const winnerMatch = fullText.match(/WINNER:\s*(.+?)(?:\n|$)/i);
-      const reasonMatch = fullText.match(/REASON:\s*(.+)/is);
+      const reasonMatch = fullText.match(/REASON:\s*([\s\S]+)/i);
 
       if (winnerMatch) {
         currentWinner.foodName = winnerMatch[1].trim();

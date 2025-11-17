@@ -243,7 +243,7 @@ function mapUSDAToFoodData(usdaFood: USDAFood) {
       sugars: Number(sugars.toFixed(2)),
       fibre: Number(fibre.toFixed(2)),
     },
-    source: 'usda',
+    source: 'usda' as const,
     sourceUrl: `https://fdc.nal.usda.gov/fdc-app.html#/food-details/${usdaFood.fdcId}/nutrients`,
   };
 }
