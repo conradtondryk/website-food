@@ -83,6 +83,39 @@ export async function searchUSDAFoodSuggestions(query: string): Promise<Array<{ 
         score -= 500; // Heavy penalty for compound foods
       }
 
+      // Filter out overly specific items that users rarely want
+      const unwantedModifiers = ['with gravy', 'with sauce', 'with butter', 'made with', 'ns as to', 'mixture', 'baby food', 'infant', 'formula', 'from fast food', 'from restaurant'];
+      const hasUnwantedModifier = unwantedModifiers.some(mod => desc.includes(mod));
+      if (hasUnwantedModifier) {
+        score -= 300;
+      }
+
+      // Filter out specific anatomical parts that users rarely search for
+      const anatomicalParts = ['back', 'tail', 'neck', 'gizzard', 'giblets', 'liver', 'heart', 'kidney', 'tongue', 'feet', 'head', 'wing', 'thigh', 'drumstick'];
+      const hasAnatomicalPart = anatomicalParts.some(part =>
+        desc.includes(`${part} ${queryLower}`) ||
+        desc.includes(`${queryLower} ${part}`) ||
+        desc.includes(`${queryLower}, ${part}`) ||
+        desc.includes(`, ${part},`)
+      );
+      if (hasAnatomicalPart) {
+        score -= 250;
+      }
+
+      // Penalize duplicate words (like "chicken chicken")
+      const words = desc.split(/[\s,]+/);
+      const hasDuplicates = words.length !== new Set(words).size;
+      if (hasDuplicates) {
+        score -= 200;
+      }
+
+      // Boost common cooking methods people actually want
+      const preferredMethods = ['fried', 'baked', 'grilled', 'roasted', 'broiled', 'boiled', 'steamed', 'cooked'];
+      const hasPreferredMethod = preferredMethods.some(method => desc.includes(`, ${method}`));
+      if (hasPreferredMethod) {
+        score += 50;
+      }
+
       // Exact match gets highest score
       if (desc === queryLower) score += 1000;
 
