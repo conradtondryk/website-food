@@ -67,8 +67,9 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={chartData}>
+      <div className="[&_*]:outline-none [&_*]:focus:outline-none">
+        <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={chartData} style={{ cursor: 'default' }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
           <XAxis
             dataKey="name"
@@ -86,10 +87,18 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
             labelStyle={{ color: '#f3f4f6' }}
             itemStyle={{ color: '#f3f4f6' }}
             formatter={(value) => [`${value}${selectedCategory.unit}`, selectedCategory.label]}
+            cursor={false}
           />
-          <Bar dataKey="value" fill={selectedCategory.color} radius={[4, 4, 0, 0]} />
+          <Bar
+            dataKey="value"
+            fill={selectedCategory.color}
+            radius={[4, 4, 0, 0]}
+            isAnimationActive={false}
+            activeBar={false}
+          />
         </BarChart>
-      </ResponsiveContainer>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
