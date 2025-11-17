@@ -1,18 +1,10 @@
-import { Pool } from 'pg';
-
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL_NON_POOLING,
-  ssl: {
-    rejectUnauthorized: true,
-  },
-});
+import { sql } from '@vercel/postgres';
 
 export async function initDatabase() {
-  const client = await pool.connect();
   try {
-    await client.query(`DROP TABLE IF EXISTS foods CASCADE`);
+    await sql`DROP TABLE IF EXISTS foods CASCADE`;
 
-    await client.query(`
+    await sql`
       CREATE TABLE foods (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE,
@@ -28,60 +20,50 @@ export async function initDatabase() {
         source_url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `);
+    `;
 
-    await client.query(`
-      CREATE INDEX idx_foods_name ON foods(LOWER(name))
-    `);
+    await sql`CREATE INDEX idx_foods_name ON foods(LOWER(name))`;
 
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Error initializing database:', error);
     throw error;
-  } finally {
-    client.release();
   }
 }
 
 export async function getFoodByName(name: string) {
-  const client = await pool.connect();
   try {
-    const result = await client.query(
-      'SELECT * FROM foods WHERE LOWER(name) = LOWER($1)',
-      [name]
-    );
+    const result = await sql`SELECT * FROM foods WHERE LOWER(name) = LOWER(${name})`;
     return result.rows[0] || null;
   } catch (error) {
     console.error('Error getting food from database:', error);
     return null;
-  } finally {
-    client.release();
   }
 }
 
 export async function searchFoodsInDatabase(query: string) {
-  const client = await pool.connect();
   try {
-    const result = await client.query(
-      `SELECT * FROM foods
-       WHERE LOWER(name) LIKE LOWER($1)
-       ORDER BY
-         CASE
-           WHEN LOWER(name) = LOWER($2) THEN 1
-           WHEN LOWER(name) LIKE LOWER($3) THEN 2
-           WHEN LOWER(name) LIKE LOWER($4) THEN 3
-           ELSE 4
-         END,
-         LENGTH(name)
-       LIMIT 5`,
-      [`%${query}%`, query, `${query},%`, `${query} %`]
-    );
+    const pattern = `%${query}%`;
+    const commaPattern = `${query},%`;
+    const spacePattern = `${query} %`;
+
+    const result = await sql`
+      SELECT * FROM foods
+      WHERE LOWER(name) LIKE LOWER(${pattern})
+      ORDER BY
+        CASE
+          WHEN LOWER(name) = LOWER(${query}) THEN 1
+          WHEN LOWER(name) LIKE LOWER(${commaPattern}) THEN 2
+          WHEN LOWER(name) LIKE LOWER(${spacePattern}) THEN 3
+          ELSE 4
+        END,
+        LENGTH(name)
+      LIMIT 5
+    `;
     return result.rows;
   } catch (error) {
     console.error('Error searching foods in database:', error);
     return [];
-  } finally {
-    client.release();
   }
 }
 
@@ -100,15 +82,26 @@ export async function saveFoodToDatabase(foodData: {
   source: 'usda' | 'ai';
   sourceUrl?: string;
 }) {
-  const client = await pool.connect();
   try {
-    const result = await client.query(
-      `INSERT INTO foods (
+    const result = await sql`
+      INSERT INTO foods (
         name, portion_size, calories, protein,
         unsaturated_fat, saturated_fat, carbs, sugars, fibre,
         source, source_url
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      VALUES (
+        ${foodData.name},
+        ${foodData.portionSize},
+        ${foodData.macros.calories},
+        ${foodData.macros.protein},
+        ${foodData.macros.unsaturatedFat},
+        ${foodData.macros.saturatedFat},
+        ${foodData.macros.carbs},
+        ${foodData.macros.sugars},
+        ${foodData.macros.fibre},
+        ${foodData.source},
+        ${foodData.sourceUrl || null}
+      )
       ON CONFLICT (name) DO UPDATE SET
         portion_size = EXCLUDED.portion_size,
         calories = EXCLUDED.calories,
@@ -120,27 +113,12 @@ export async function saveFoodToDatabase(foodData: {
         fibre = EXCLUDED.fibre,
         source = EXCLUDED.source,
         source_url = EXCLUDED.source_url
-      RETURNING *`,
-      [
-        foodData.name,
-        foodData.portionSize,
-        foodData.macros.calories,
-        foodData.macros.protein,
-        foodData.macros.unsaturatedFat,
-        foodData.macros.saturatedFat,
-        foodData.macros.carbs,
-        foodData.macros.sugars,
-        foodData.macros.fibre,
-        foodData.source,
-        foodData.sourceUrl || null,
-      ]
-    );
+      RETURNING *
+    `;
     return result.rows[0];
   } catch (error) {
     console.error('Error saving food to database:', error);
     throw error;
-  } finally {
-    client.release();
   }
 }
 
