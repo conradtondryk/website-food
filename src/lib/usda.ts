@@ -39,23 +39,31 @@ export async function searchUSDAFood(query: string) {
 
     const queryLower = query.toLowerCase().trim();
 
-    const rawFood = data.foods.find((f: any) =>
-      f.description.toLowerCase().includes(queryLower) &&
-      f.description.toLowerCase().includes('raw')
-    );
-
-    const freshFood = data.foods.find((f: any) =>
-      f.description.toLowerCase().includes(queryLower) &&
-      f.description.toLowerCase().includes('fresh')
-    );
-
+    // Exact match
     const exactMatch = data.foods.find((f: any) =>
       f.description.toLowerCase() === queryLower ||
       f.description.toLowerCase() === `${queryLower}, raw` ||
       f.description.toLowerCase() === `${queryLower}, fresh`
     );
 
-    const food = exactMatch || rawFood || freshFood || data.foods[0];
+    // Match where description starts with query (e.g., "steak" matches "steak, raw" but not "peppered steak")
+    const startsWithMatch = data.foods.find((f: any) =>
+      f.description.toLowerCase().startsWith(queryLower)
+    );
+
+    // Raw food that starts with query
+    const rawFood = data.foods.find((f: any) =>
+      f.description.toLowerCase().startsWith(queryLower) &&
+      f.description.toLowerCase().includes('raw')
+    );
+
+    // Fresh food that starts with query
+    const freshFood = data.foods.find((f: any) =>
+      f.description.toLowerCase().startsWith(queryLower) &&
+      f.description.toLowerCase().includes('fresh')
+    );
+
+    const food = exactMatch || rawFood || freshFood || startsWithMatch || data.foods[0];
     return mapUSDAToFoodData(food);
   } catch (error) {
     console.error('Error fetching from USDA:', error);
