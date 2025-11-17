@@ -63,8 +63,18 @@ export async function searchFoodsInDatabase(query: string) {
   const client = await pool.connect();
   try {
     const result = await client.query(
-      'SELECT * FROM foods WHERE LOWER(name) LIKE LOWER($1) ORDER BY LENGTH(name) LIMIT 5',
-      [`%${query}%`]
+      `SELECT * FROM foods
+       WHERE LOWER(name) LIKE LOWER($1)
+       ORDER BY
+         CASE
+           WHEN LOWER(name) = LOWER($2) THEN 1
+           WHEN LOWER(name) LIKE LOWER($3) THEN 2
+           WHEN LOWER(name) LIKE LOWER($4) THEN 3
+           ELSE 4
+         END,
+         LENGTH(name)
+       LIMIT 5`,
+      [`%${query}%`, query, `${query},%`, `${query} %`]
     );
     return result.rows;
   } catch (error) {

@@ -46,24 +46,32 @@ export async function searchUSDAFood(query: string) {
       f.description.toLowerCase() === `${queryLower}, fresh`
     );
 
-    // Match where description starts with query (e.g., "steak" matches "steak, raw" but not "peppered steak")
+    // Match where query is complete word at start (e.g., "rice" matches "rice, white" but not "rice dressing")
+    const exactWordMatch = data.foods.find((f: any) => {
+      const desc = f.description.toLowerCase();
+      return desc === queryLower || desc.startsWith(`${queryLower},`) || desc.startsWith(`${queryLower} `);
+    });
+
+    // Raw food that starts with exact query word
+    const rawFood = data.foods.find((f: any) => {
+      const desc = f.description.toLowerCase();
+      return (desc === queryLower || desc.startsWith(`${queryLower},`) || desc.startsWith(`${queryLower} `)) &&
+        desc.includes('raw');
+    });
+
+    // Fresh food that starts with exact query word
+    const freshFood = data.foods.find((f: any) => {
+      const desc = f.description.toLowerCase();
+      return (desc === queryLower || desc.startsWith(`${queryLower},`) || desc.startsWith(`${queryLower} `)) &&
+        desc.includes('fresh');
+    });
+
+    // Fallback: any match that starts with query
     const startsWithMatch = data.foods.find((f: any) =>
       f.description.toLowerCase().startsWith(queryLower)
     );
 
-    // Raw food that starts with query
-    const rawFood = data.foods.find((f: any) =>
-      f.description.toLowerCase().startsWith(queryLower) &&
-      f.description.toLowerCase().includes('raw')
-    );
-
-    // Fresh food that starts with query
-    const freshFood = data.foods.find((f: any) =>
-      f.description.toLowerCase().startsWith(queryLower) &&
-      f.description.toLowerCase().includes('fresh')
-    );
-
-    const food = exactMatch || rawFood || freshFood || startsWithMatch || data.foods[0];
+    const food = exactMatch || rawFood || freshFood || exactWordMatch || startsWithMatch || data.foods[0];
     return mapUSDAToFoodData(food);
   } catch (error) {
     console.error('Error fetching from USDA:', error);
