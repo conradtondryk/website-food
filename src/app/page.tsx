@@ -264,6 +264,7 @@ export default function Home() {
     // Reset winner if we have less than 2 foods
     if (newFoodItems.length < 2) {
       setWinner(null);
+      setViewMode('cards'); // Switch back to cards view
     }
 
     // Reset base portion size if we removed all foods
@@ -319,8 +320,8 @@ export default function Home() {
 
       {/* Main content area */}
       <main className="flex-1 flex flex-col gap-4 sm:gap-6 px-4 sm:px-8 py-4 sm:py-6">
-        {/* View toggle - only show when 2+ foods */}
-        {foodItems.length >= 2 && (
+        {/* View toggle - always visible when there are items or loading */}
+        {(foodItems.length > 0 || loadingCards > 0) && (
           <div className="flex justify-center">
             <div className="inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-1">
               <button
@@ -334,10 +335,13 @@ export default function Home() {
                 Cards
               </button>
               <button
-                onClick={() => setViewMode('chart')}
+                onClick={() => foodItems.length >= 2 && setViewMode('chart')}
+                disabled={foodItems.length < 2}
                 className={`px-4 py-2 text-sm rounded-md transition-colors ${
                   viewMode === 'chart'
                     ? 'bg-blue-500 text-white'
+                    : foodItems.length < 2
+                    ? 'text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
                     : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
                 }`}
               >
