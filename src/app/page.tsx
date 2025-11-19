@@ -134,7 +134,7 @@ export default function Home() {
 
       if (!response.ok) {
         if (data.error === 'invalid_food') {
-          setError('please enter a valid food item.');
+          setError('food not found. try a different search term.');
         } else if (data.error === 'rate_limited') {
           setError(data.message);
         } else {
@@ -184,7 +184,7 @@ export default function Home() {
 
         if (!response.ok) {
           if (data.error === 'invalid_food') {
-            setError('please enter a valid food item.');
+            setError('food not found. try a different search term.');
           } else if (data.error === 'rate_limited') {
             setError(data.message);
           } else {
@@ -267,8 +267,8 @@ export default function Home() {
               : 'select another food to compare to.'}
           </h1>
           {error && (
-            <div className="max-w-md mx-auto mb-3 px-4 py-2 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
-              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+            <div className="max-w-md mx-auto mb-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-700 dark:text-blue-300">{error}</p>
             </div>
           )}
           <div className="max-w-md mx-auto relative">
