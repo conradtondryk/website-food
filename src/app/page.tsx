@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import FoodCard from './components/FoodCard';
 import FoodCardSkeleton from './components/FoodCardSkeleton';
 import WinnerCard from './components/WinnerCard';
@@ -373,15 +374,23 @@ export default function Home() {
           <div className="flex-1 flex gap-3 sm:gap-6 overflow-x-auto pb-4 min-h-[400px] items-start">
             {viewMode === 'cards' ? (
               <>
-                {foodItems.map((food, index) => (
-                  <div key={index} className="flex-shrink-0">
-                    <FoodCard
-                      food={food}
-                      onPriceChange={(price) => handlePriceChange(index, price)}
-                      onRemove={() => handleRemoveFood(index)}
-                    />
-                  </div>
-                ))}
+                <AnimatePresence mode="popLayout">
+                  {foodItems.map((food, index) => (
+                    <motion.div
+                      key={food.name}
+                      layout
+                      transition={{ duration: 0.15 }}
+                      exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+                      className="flex-shrink-0"
+                    >
+                      <FoodCard
+                        food={food}
+                        onPriceChange={(price) => handlePriceChange(index, price)}
+                        onRemove={() => handleRemoveFood(index)}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
                 {/* Show skeleton cards while loading */}
                 {[...Array(loadingCards)].map((_, index) => (
                   <div key={`skeleton-${index}`} className="flex-shrink-0">
