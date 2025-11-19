@@ -3,11 +3,36 @@ import { FoodItem } from '../types';
 interface FoodCardProps {
   food: FoodItem;
   onPriceChange?: (price: number | undefined) => void;
+  onRemove?: () => void;
 }
 
-export default function FoodCard({ food, onPriceChange }: FoodCardProps) {
+export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProps) {
   return (
-    <div className="w-40 sm:w-80 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-2 sm:p-4">
+    <div className="w-40 sm:w-80 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-2 sm:p-4 relative">
+      {/* Remove button */}
+      {onRemove && (
+        <button
+          onClick={onRemove}
+          className="absolute top-1 right-1 sm:top-2 sm:right-2 p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+          title="Remove"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      )}
+
       {/* Food Name */}
       <h2 className="text-sm sm:text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100 mb-0.5 sm:mb-1">
         {food.name}

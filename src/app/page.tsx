@@ -241,6 +241,21 @@ export default function Home() {
     setFoodItems(newFoodItems);
   };
 
+  const handleRemoveFood = (index: number) => {
+    const newFoodItems = foodItems.filter((_, i) => i !== index);
+    setFoodItems(newFoodItems);
+
+    // Reset winner if we have less than 2 foods
+    if (newFoodItems.length < 2) {
+      setWinner(null);
+    }
+
+    // Reset base portion size if we removed all foods
+    if (newFoodItems.length === 0) {
+      setBasePortionSize(null);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black">
       {/* Top search bar */}
@@ -351,6 +366,7 @@ export default function Home() {
                   <FoodCard
                     food={food}
                     onPriceChange={(price) => handlePriceChange(index, price)}
+                    onRemove={() => handleRemoveFood(index)}
                   />
                 </div>
               ))
@@ -362,6 +378,7 @@ export default function Home() {
           </div>
 
           {/* Winner section - bottom on mobile, right on desktop */}
+          {/* Temporarily hidden - keeping logic for later
           {foodItems.length > 0 && (
             <div className="flex-shrink-0 w-full lg:w-auto">
               <WinnerCard
@@ -372,6 +389,7 @@ export default function Home() {
               />
             </div>
           )}
+          */}
         </div>
       </main>
     </div>
