@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import FoodCard from './components/FoodCard';
 import WinnerCard from './components/WinnerCard';
 import CategoryChart from './components/CategoryChart';
@@ -17,20 +17,15 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'cards' | 'chart'>('cards');
   const [suggestions, setSuggestions] = useState<Array<{ displayName: string; originalName: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
     if (foodQuery.trim().length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
-    debounceTimerRef.current = setTimeout(async () => {
+    const fetchSuggestions = async () => {
       try {
         const response = await fetch('/api/food/suggestions', {
           method: 'POST',
@@ -51,13 +46,9 @@ export default function Home() {
         setSuggestions([]);
         setShowSuggestions(false);
       }
-    }, 300);
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
     };
+
+    fetchSuggestions();
   }, [foodQuery]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
