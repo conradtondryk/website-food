@@ -1,9 +1,16 @@
 import { config } from 'dotenv';
+import { Pool } from 'pg';
 import { searchUSDAFood } from '../src/lib/usda';
-import { saveFoodToDatabase } from '../src/lib/db';
 
 // Load environment variables from .env.local
 config({ path: '.env.local' });
+
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 // Core fundamental foods that people commonly search for
 const FUNDAMENTAL_FOODS = [
@@ -110,7 +117,38 @@ async function populateDatabase() {
       const foodData = await searchUSDAFood(foodName);
 
       if (foodData) {
-        await saveFoodToDatabase(foodData);
+        await pool.query(
+          `INSERT INTO foods (
+            name, portion_size, calories, protein,
+            unsaturated_fat, saturated_fat, carbs, sugars, fibre,
+            source, source_url
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          ON CONFLICT (name) DO UPDATE SET
+            portion_size = EXCLUDED.portion_size,
+            calories = EXCLUDED.calories,
+            protein = EXCLUDED.protein,
+            unsaturated_fat = EXCLUDED.unsaturated_fat,
+            saturated_fat = EXCLUDED.saturated_fat,
+            carbs = EXCLUDED.carbs,
+            sugars = EXCLUDED.sugars,
+            fibre = EXCLUDED.fibre,
+            source = EXCLUDED.source,
+            source_url = EXCLUDED.source_url`,
+          [
+            foodData.name,
+            foodData.portionSize,
+            foodData.macros.calories,
+            foodData.macros.protein,
+            foodData.macros.unsaturatedFat,
+            foodData.macros.saturatedFat,
+            foodData.macros.carbs,
+            foodData.macros.sugars,
+            foodData.macros.fibre,
+            foodData.source,
+            foodData.sourceUrl || null
+          ]
+        );
         console.log(`✓ Saved: ${foodData.name}`);
         successCount++;
       } else {
@@ -129,6 +167,8 @@ async function populateDatabase() {
   console.log(`\n=== Complete ===`);
   console.log(`Success: ${successCount}`);
   console.log(`Failed: ${failCount}`);
+
+  await pool.end();
 }
 
 populateDatabase().catch(console.error);

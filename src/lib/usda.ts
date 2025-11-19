@@ -161,14 +161,18 @@ export async function searchUSDAFood(query: string) {
     );
 
     if (!response.ok) {
+      console.log(`[searchUSDAFood] Response not OK: ${response.status}`);
       return null;
     }
 
     const data: USDASearchResult = await response.json();
 
     if (!data.foods || data.foods.length === 0) {
+      console.log(`[searchUSDAFood] No foods returned for: ${query}`);
       return null;
     }
+
+    console.log(`[searchUSDAFood] Found ${data.foods.length} results for: ${query}`);
 
     const queryLower = query.toLowerCase().trim();
 
@@ -209,7 +213,10 @@ export async function searchUSDAFood(query: string) {
     );
 
     const food = exactMatch || rawFood || freshFood || commaMatch || spaceMatch || startsWithMatch || data.foods[0];
-    return mapUSDAToFoodData(food);
+    console.log(`[searchUSDAFood] Selected food: ${food.description}`);
+    const result = mapUSDAToFoodData(food);
+    console.log(`[searchUSDAFood] Mapped result:`, result ? result.name : 'NULL');
+    return result;
   } catch (error) {
     console.error('Error fetching from USDA:', error);
     return null;
