@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import FoodCard from './components/FoodCard';
+import FoodCardSkeleton from './components/FoodCardSkeleton';
 import WinnerCard from './components/WinnerCard';
 import CategoryChart from './components/CategoryChart';
 import { FoodItem, Winner } from './types';
@@ -11,6 +12,7 @@ export default function Home() {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [winner, setWinner] = useState<Winner | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingCards, setLoadingCards] = useState<number>(0);
   const [comparing, setComparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [basePortionSize, setBasePortionSize] = useState<string | null>(null);
@@ -121,6 +123,9 @@ export default function Home() {
     setLoading(true);
     setError(null);
 
+    // Show skeleton immediately
+    setLoadingCards(prev => prev + 1);
+
     try {
       const response = await fetch('/api/food', {
         method: 'POST',
@@ -133,6 +138,7 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
+        setLoadingCards(prev => prev - 1);
         if (data.error === 'invalid_food') {
           setError('food not found. try a different search term.');
         } else if (data.error === 'rate_limited') {
@@ -149,12 +155,15 @@ export default function Home() {
 
       const newFoodItems = [...foodItems, data];
       setFoodItems(newFoodItems);
+      setLoadingCards(prev => prev - 1);
+
       if (winner) {
         setWinner(null);
       }
     } catch (error) {
       console.error('Error fetching food data:', error);
       setError('failed to fetch food data. please try again.');
+      setLoadingCards(prev => prev - 1);
     } finally {
       setLoading(false);
     }
@@ -171,6 +180,9 @@ export default function Home() {
       setLoading(true);
       setError(null);
 
+      // Show skeleton immediately
+      setLoadingCards(prev => prev + 1);
+
       try {
         const response = await fetch('/api/food', {
           method: 'POST',
@@ -183,6 +195,7 @@ export default function Home() {
         const data = await response.json();
 
         if (!response.ok) {
+          setLoadingCards(prev => prev - 1);
           if (data.error === 'invalid_food') {
             setError('food not found. try a different search term.');
           } else if (data.error === 'rate_limited') {
@@ -199,6 +212,8 @@ export default function Home() {
 
         const newFoodItems = [...foodItems, data];
         setFoodItems(newFoodItems);
+        setLoadingCards(prev => prev - 1);
+
         setFoodQuery('');
         setSuggestions([]);
         setShowSuggestions(false);
@@ -208,6 +223,7 @@ export default function Home() {
       } catch (error) {
         console.error('Error fetching food data:', error);
         setError('failed to fetch food data. please try again.');
+        setLoadingCards(prev => prev - 1);
       } finally {
         setLoading(false);
       }
@@ -272,21 +288,16 @@ export default function Home() {
             </div>
           )}
           <div className="max-w-md mx-auto relative">
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                value={foodQuery}
-                onChange={handleInputChange}
-                onKeyPress={handleKeyPress}
-                placeholder="enter food item..."
-                autoFocus
-                disabled={loading}
-                className="flex-1 px-4 py-3 text-base rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              {loading && (
-                <div className="animate-spin h-5 w-5 border-2 border-zinc-300 dark:border-zinc-600 border-t-blue-500 rounded-full"></div>
-              )}
-            </div>
+            <input
+              type="text"
+              value={foodQuery}
+              onChange={handleInputChange}
+              onKeyPress={handleKeyPress}
+              placeholder="enter food item..."
+              autoFocus
+              disabled={loading}
+              className="w-full px-4 py-3 text-base rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            />
 
             {/* Suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
@@ -340,15 +351,23 @@ export default function Home() {
           {/* Food cards or chart - scrollable horizontally on mobile */}
           <div className="flex-1 flex gap-3 sm:gap-6 overflow-x-auto pb-4 min-h-[400px] items-start">
             {viewMode === 'cards' ? (
-              foodItems.map((food, index) => (
-                <div key={index} className="flex-shrink-0">
-                  <FoodCard
-                    food={food}
-                    onPriceChange={(price) => handlePriceChange(index, price)}
-                    onRemove={() => handleRemoveFood(index)}
-                  />
-                </div>
-              ))
+              <>
+                {foodItems.map((food, index) => (
+                  <div key={index} className="flex-shrink-0">
+                    <FoodCard
+                      food={food}
+                      onPriceChange={(price) => handlePriceChange(index, price)}
+                      onRemove={() => handleRemoveFood(index)}
+                    />
+                  </div>
+                ))}
+                {/* Show skeleton cards while loading */}
+                {[...Array(loadingCards)].map((_, index) => (
+                  <div key={`skeleton-${index}`} className="flex-shrink-0">
+                    <FoodCardSkeleton />
+                  </div>
+                ))}
+              </>
             ) : (
               <div className="w-full">
                 <CategoryChart foods={foodItems} />
