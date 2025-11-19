@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFoodByName, saveFoodToDatabase, mapDatabaseRowToFoodItem, searchFoodsInDatabase } from '@/lib/db';
-import { searchUSDAFood } from '@/lib/usda';
+import { getFoodByName, mapDatabaseRowToFoodItem, searchFoodsInDatabase } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
-    const { foodName, matchPortionSize } = await request.json();
+    const { foodName } = await request.json();
 
     if (!foodName || typeof foodName !== 'string') {
       return NextResponse.json(
@@ -15,30 +14,20 @@ export async function POST(request: NextRequest) {
 
     const normalizedName = foodName.trim().toLowerCase();
 
+    // Try exact match first
     const exactMatch = await getFoodByName(normalizedName);
-    if (exactMatch && !matchPortionSize) {
+    if (exactMatch) {
       return NextResponse.json(mapDatabaseRowToFoodItem(exactMatch));
     }
 
+    // Try fuzzy search
     const dbMatches = await searchFoodsInDatabase(normalizedName);
-    if (dbMatches && dbMatches.length > 0 && !matchPortionSize) {
+    if (dbMatches && dbMatches.length > 0) {
       return NextResponse.json(mapDatabaseRowToFoodItem(dbMatches[0]));
     }
 
-    if (!matchPortionSize) {
-      const usdaFood = await searchUSDAFood(normalizedName);
-      if (usdaFood) {
-        try {
-          await saveFoodToDatabase(usdaFood);
-        } catch (error) {
-          console.error('Error saving USDA food to database:', error);
-        }
-        return NextResponse.json(usdaFood);
-      }
-    }
-
     return NextResponse.json(
-      { error: 'Food not found. Please try a different search.' },
+      { error: 'invalid_food' },
       { status: 404 }
     );
   } catch (error) {

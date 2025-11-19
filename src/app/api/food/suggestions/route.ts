@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchUSDAFoodSuggestions } from '@/lib/usda';
+import { searchFoodsInDatabase } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,11 +14,14 @@ export async function POST(request: NextRequest) {
 
     const normalizedName = foodName.trim().toLowerCase();
 
-    // Query USDA for suggestions
-    const usdaSuggestions = await searchUSDAFoodSuggestions(normalizedName);
-    if (usdaSuggestions && usdaSuggestions.length > 0) {
+    // Query database for suggestions
+    const results = await searchFoodsInDatabase(normalizedName);
+    if (results && results.length > 0) {
       return NextResponse.json({
-        suggestions: usdaSuggestions.map(s => ({ displayName: s.displayName, originalName: s.originalName }))
+        suggestions: results.map(food => ({
+          displayName: food.name,
+          originalName: food.name
+        }))
       });
     }
 

@@ -1,4 +1,25 @@
 import { sql } from '@vercel/postgres';
+import { Pool } from 'pg';
+
+// Use pg Pool for local development, Vercel will use @vercel/postgres
+const pool = process.env.VERCEL
+  ? null
+  : new Pool({
+      connectionString: process.env.POSTGRES_URL,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    });
+
+async function query(queryText: string, values?: any[]): Promise<{ rows: any[] }> {
+  if (process.env.VERCEL) {
+    // On Vercel, use @vercel/postgres
+    return await sql.query(queryText, values || []);
+  } else {
+    // Locally, use pg Pool
+    return await pool!.query(queryText, values);
+  }
+}
 
 export async function initDatabase() {
   try {
@@ -33,7 +54,10 @@ export async function initDatabase() {
 
 export async function getFoodByName(name: string) {
   try {
-    const result = await sql`SELECT * FROM foods WHERE LOWER(name) = LOWER(${name})`;
+    const result = await query(
+      'SELECT * FROM foods WHERE LOWER(name) = LOWER($1)',
+      [name]
+    );
     return result.rows[0] || null;
   } catch (error) {
     console.error('Error getting food from database:', error);
@@ -41,25 +65,39 @@ export async function getFoodByName(name: string) {
   }
 }
 
-export async function searchFoodsInDatabase(query: string) {
+export async function searchFoodsInDatabase(searchQuery: string) {
   try {
-    const pattern = `%${query}%`;
-    const commaPattern = `${query},%`;
-    const spacePattern = `${query} %`;
+    // Split search query into individual words for fuzzy matching
+    const words = searchQuery.toLowerCase().trim().split(/\s+/).filter(w => w.length > 0);
 
-    const result = await sql`
-      SELECT * FROM foods
-      WHERE LOWER(name) LIKE LOWER(${pattern})
-      ORDER BY
-        CASE
-          WHEN LOWER(name) = LOWER(${query}) THEN 1
-          WHEN LOWER(name) LIKE LOWER(${commaPattern}) THEN 2
-          WHEN LOWER(name) LIKE LOWER(${spacePattern}) THEN 3
-          ELSE 4
-        END,
-        LENGTH(name)
-      LIMIT 5
-    `;
+    if (words.length === 0) {
+      return [];
+    }
+
+    // Build WHERE clause requiring all words to be present
+    const whereConditions = words.map((_, index) => `LOWER(name) LIKE $${index + 1}`).join(' AND ');
+    const wordPatterns = words.map(word => `%${word}%`);
+
+    // Build ORDER BY for better relevance ranking
+    const exactPattern = searchQuery;
+    const commaPattern = `${searchQuery},%`;
+    const spacePattern = `${searchQuery} %`;
+
+    const paramCount = words.length;
+    const result = await query(
+      `SELECT * FROM foods
+       WHERE ${whereConditions}
+       ORDER BY
+         CASE
+           WHEN LOWER(name) = LOWER($${paramCount + 1}) THEN 1
+           WHEN LOWER(name) LIKE LOWER($${paramCount + 2}) THEN 2
+           WHEN LOWER(name) LIKE LOWER($${paramCount + 3}) THEN 3
+           ELSE 4
+         END,
+         LENGTH(name)
+       LIMIT 5`,
+      [...wordPatterns, exactPattern, commaPattern, spacePattern]
+    );
     return result.rows;
   } catch (error) {
     console.error('Error searching foods in database:', error);
