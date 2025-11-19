@@ -19,6 +19,7 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'cards' | 'chart'>('cards');
   const [suggestions, setSuggestions] = useState<Array<{ displayName: string; originalName: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
 
   useEffect(() => {
     if (foodQuery.trim().length < 2) {
@@ -52,6 +53,22 @@ export default function Home() {
 
     fetchSuggestions();
   }, [foodQuery]);
+
+  // Show slow loading message after 1.5 seconds for cold start
+  useEffect(() => {
+    if (loadingCards > 0 && foodItems.length === 0) {
+      const timer = setTimeout(() => {
+        setShowSlowLoadingMessage(true);
+      }, 1500);
+
+      return () => {
+        clearTimeout(timer);
+        setShowSlowLoadingMessage(false);
+      };
+    } else {
+      setShowSlowLoadingMessage(false);
+    }
+  }, [loadingCards, foodItems.length]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFoodQuery(e.target.value);
@@ -371,6 +388,15 @@ export default function Home() {
                     <FoodCardSkeleton />
                   </div>
                 ))}
+                {/* Show slow loading message for cold start */}
+                {showSlowLoadingMessage && (
+                  <div className="flex-shrink-0 flex items-center justify-center w-40 sm:w-80">
+                    <div className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                      <div className="animate-pulse">warming up database...</div>
+                      <div className="text-xs mt-2">this may take a few seconds</div>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="w-full">
