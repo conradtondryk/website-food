@@ -89,12 +89,19 @@ export async function searchFoodsInDatabase(searchQuery: string) {
        WHERE ${whereConditions}
        ORDER BY
          CASE
+           -- Exact match is always first
            WHEN LOWER(name) = LOWER($${paramCount + 1}) THEN 1
-           WHEN LOWER(name) LIKE LOWER($${paramCount + 2}) THEN 2
-           WHEN LOWER(name) LIKE LOWER($${paramCount + 3}) THEN 3
-           ELSE 4
+           -- Common cooking methods next (most useful to users)
+           WHEN LOWER(name) ~ '\\y(fried|grilled|baked|roasted|cooked|boiled|steamed|raw)\\y' THEN 2
+           -- Then starts with patterns
+           WHEN LOWER(name) LIKE LOWER($${paramCount + 2}) THEN 3
+           WHEN LOWER(name) LIKE LOWER($${paramCount + 3}) THEN 4
+           -- Everything else last
+           ELSE 5
          END,
-         LENGTH(name)
+         -- Within same priority: prefer shorter, simpler names
+         LENGTH(name),
+         array_length(string_to_array(name, ' '), 1)
        LIMIT 5`,
       [...wordPatterns, exactPattern, commaPattern, spacePattern]
     );
