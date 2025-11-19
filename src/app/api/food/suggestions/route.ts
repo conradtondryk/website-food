@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchFoodsInDatabase } from '@/lib/db';
+import { formatFoodName } from '@/lib/format';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (results && results.length > 0) {
       return NextResponse.json({
         suggestions: results.map(food => ({
-          displayName: food.name,
+          displayName: formatFoodName(food.name),
           originalName: food.name
         }))
       });

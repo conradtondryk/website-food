@@ -169,9 +169,11 @@ export async function saveFoodToDatabase(foodData: {
   }
 }
 
+import { formatFoodName } from './format';
+
 export function mapDatabaseRowToFoodItem(row: any) {
   return {
-    name: row.name,
+    name: formatFoodName(row.name),
     portionSize: row.portion_size,
     macros: {
       calories: Number(row.calories),
