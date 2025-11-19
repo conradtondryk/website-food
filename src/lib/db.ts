@@ -91,13 +91,15 @@ export async function searchFoodsInDatabase(searchQuery: string) {
          CASE
            -- Exact match is always first
            WHEN LOWER(name) = LOWER($${paramCount + 1}) THEN 1
-           -- Common cooking methods next (most useful to users)
-           WHEN LOWER(name) ~ '\\y(fried|grilled|baked|roasted|cooked|boiled|steamed|raw)\\y' THEN 2
+           -- Short simple names (1-2 words) for single-word searches
+           WHEN array_length(string_to_array(name, ' '), 1) <= 2 THEN 2
+           -- Common cooking methods (useful for multi-word searches)
+           WHEN LOWER(name) ~ '\\y(fried|grilled|baked|roasted|cooked|boiled|steamed|raw)\\y' THEN 3
            -- Then starts with patterns
-           WHEN LOWER(name) LIKE LOWER($${paramCount + 2}) THEN 3
-           WHEN LOWER(name) LIKE LOWER($${paramCount + 3}) THEN 4
+           WHEN LOWER(name) LIKE LOWER($${paramCount + 2}) THEN 4
+           WHEN LOWER(name) LIKE LOWER($${paramCount + 3}) THEN 5
            -- Everything else last
-           ELSE 5
+           ELSE 6
          END,
          -- Within same priority: prefer shorter, simpler names
          LENGTH(name),
