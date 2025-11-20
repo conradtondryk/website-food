@@ -36,7 +36,7 @@ export default function WinnerCard({ winner, onCompare, comparing, canCompare }:
             <button
               onClick={onCompare}
               disabled={comparing}
-              className="px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {comparing ? 'comparing...' : 'compare'}
             </button>

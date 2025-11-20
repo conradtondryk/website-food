@@ -13,7 +13,7 @@ export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProp
       {onRemove && (
         <button
           onClick={onRemove}
-          className="absolute top-1 right-1 sm:top-2 sm:right-2 p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+          className="absolute top-1 right-1 sm:top-2 sm:right-2 p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
           title="Remove"
         >
           <svg

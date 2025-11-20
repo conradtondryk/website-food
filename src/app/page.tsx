@@ -325,7 +325,7 @@ export default function Home() {
                   <button
                     key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className="w-full px-4 py-3 text-left text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700 last:border-b-0"
+                    className="w-full px-4 py-3 text-left text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700 last:border-b-0 cursor-pointer"
                   >
                     {suggestion.displayName}
                   </button>
@@ -344,7 +344,7 @@ export default function Home() {
             <div className="inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-1">
               <button
                 onClick={() => setViewMode('cards')}
-                className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                className={`px-4 py-2 text-sm rounded-md transition-colors cursor-pointer ${
                   viewMode === 'cards'
                     ? 'bg-blue-500 text-white'
                     : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
@@ -360,7 +360,7 @@ export default function Home() {
                     ? 'bg-blue-500 text-white'
                     : foodItems.length < 2
                     ? 'text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
-                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer'
                 }`}
               >
                 Chart

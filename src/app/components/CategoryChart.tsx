@@ -55,7 +55,7 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
             <button
               key={category.key}
               onClick={() => setSelectedCategory(category)}
-              className={`px-2 py-1 text-xs rounded-md transition-colors ${
+              className={`px-2 py-1 text-xs rounded-md transition-colors cursor-pointer ${
                 selectedCategory.key === category.key
                   ? 'bg-blue-500 text-white'
                   : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600'
