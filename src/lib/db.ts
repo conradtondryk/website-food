@@ -97,8 +97,14 @@ export async function searchFoodsInDatabase(searchQuery: string) {
            WHEN array_length(string_to_array(name, ' '), 1) <= 2 THEN 4
            -- Common cooking methods
            WHEN LOWER(name) ~ '\\y(fried|grilled|baked|roasted|cooked|boiled|steamed|raw)\\y' THEN 5
+           -- Prefer shorter names (implicitly simpler/more common)
+           WHEN array_length(string_to_array(name, ' '), 1) <= 3 THEN 6
+           -- Downrank restaurant foods and specific flours unless explicitly searched
+           WHEN LOWER(name) ~ '\\y(restaurant|fast food|flour|starch)\\y' THEN 9
+           -- Downrank dried/powdered/dehydrated foods (force these lower even if they are short names)
+           WHEN LOWER(name) ~ '\\y(dried|dry|powder|powdered|dehydrated|flake|flakes)\\y' THEN 10
            -- Everything else last
-           ELSE 6
+           ELSE 7
          END,
          -- Within same priority: prefer shorter, simpler names
          LENGTH(name),
