@@ -80,10 +80,8 @@ export async function searchFoodsInDatabase(searchQuery: string) {
 
     // Build ORDER BY for better relevance ranking
     const exactPattern = searchQuery;
-    const commaPattern = `${searchQuery},%`;
-    const spacePattern = `${searchQuery} %`;
-
     const paramCount = words.length;
+
     const result = await query(
       `SELECT * FROM foods
        WHERE ${whereConditions}
@@ -91,21 +89,22 @@ export async function searchFoodsInDatabase(searchQuery: string) {
          CASE
            -- Exact match is always first
            WHEN LOWER(name) = LOWER($${paramCount + 1}) THEN 1
-           -- Short simple names (1-2 words) for single-word searches
-           WHEN array_length(string_to_array(name, ' '), 1) <= 2 THEN 2
-           -- Common cooking methods (useful for multi-word searches)
-           WHEN LOWER(name) ~ '\\y(fried|grilled|baked|roasted|cooked|boiled|steamed|raw)\\y' THEN 3
-           -- Then starts with patterns
-           WHEN LOWER(name) LIKE LOWER($${paramCount + 2}) THEN 4
-           WHEN LOWER(name) LIKE LOWER($${paramCount + 3}) THEN 5
+           -- Starts with query followed by space or comma (e.g. "Egg, whole" for "egg")
+           WHEN LOWER(name) LIKE LOWER($${paramCount + 1}) || ' %' OR LOWER(name) LIKE LOWER($${paramCount + 1}) || ',%' THEN 2
+           -- Starts with (prefix match)
+           WHEN LOWER(name) LIKE LOWER($${paramCount + 1}) || '%' THEN 3
+           -- Short simple names (1-2 words)
+           WHEN array_length(string_to_array(name, ' '), 1) <= 2 THEN 4
+           -- Common cooking methods
+           WHEN LOWER(name) ~ '\\y(fried|grilled|baked|roasted|cooked|boiled|steamed|raw)\\y' THEN 5
            -- Everything else last
            ELSE 6
          END,
          -- Within same priority: prefer shorter, simpler names
          LENGTH(name),
          array_length(string_to_array(name, ' '), 1)
-       LIMIT 5`,
-      [...wordPatterns, exactPattern, commaPattern, spacePattern]
+       LIMIT 50`,
+      [...wordPatterns, exactPattern]
     );
     return result.rows;
   } catch (error) {

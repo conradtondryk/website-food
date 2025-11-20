@@ -18,11 +18,22 @@ export async function POST(request: NextRequest) {
     // Query database for suggestions
     const results = await searchFoodsInDatabase(normalizedName);
     if (results && results.length > 0) {
+      const uniqueSuggestions = new Map();
+
+      results.forEach(food => {
+        const displayName = formatFoodName(food.name);
+        if (!uniqueSuggestions.has(displayName)) {
+          uniqueSuggestions.set(displayName, {
+            displayName,
+            originalName: food.name
+          });
+        }
+      });
+
+      const suggestions = Array.from(uniqueSuggestions.values()).slice(0, 5);
+
       return NextResponse.json({
-        suggestions: results.map(food => ({
-          displayName: formatFoodName(food.name),
-          originalName: food.name
-        }))
+        suggestions
       });
     }
 
