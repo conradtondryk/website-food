@@ -315,7 +315,7 @@ export default function Home() {
               placeholder="enter food item..."
               autoFocus
               disabled={loading}
-              className="w-full pl-3 pr-2 py-1.5 text-base rounded-full border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full pl-5 pr-2 py-1.5 text-base rounded-full border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             />
 
             {/* Suggestions dropdown */}
