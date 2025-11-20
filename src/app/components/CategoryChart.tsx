@@ -45,7 +45,7 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
   }));
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-3 sm:p-4">
+    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-zinc-800 rounded-2xl shadow-md border border-zinc-200 dark:border-zinc-700 p-3 sm:p-4">
       <div className="mb-3">
         <h3 className="text-sm sm:text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
           Compare by Category
@@ -55,7 +55,7 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
             <button
               key={category.key}
               onClick={() => setSelectedCategory(category)}
-              className={`px-2 py-1 text-xs rounded-md transition-colors cursor-pointer ${
+              className={`px-2 py-1 text-xs rounded-full transition-colors cursor-pointer ${
                 selectedCategory.key === category.key
                   ? 'bg-blue-500 text-white'
                   : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600'

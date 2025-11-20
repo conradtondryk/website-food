@@ -302,7 +302,7 @@ export default function Home() {
               : 'select another food to compare to.'}
           </h1>
           {error && (
-            <div className="max-w-md mx-auto mb-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="max-w-md mx-auto mb-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-full">
               <p className="text-sm text-blue-700 dark:text-blue-300">{error}</p>
             </div>
           )}
@@ -315,12 +315,12 @@ export default function Home() {
               placeholder="enter food item..."
               autoFocus
               disabled={loading}
-              className="w-full px-4 py-3 text-base rounded-lg border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full pl-3 pr-2 py-1.5 text-base rounded-full border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             />
 
             {/* Suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-lg shadow-lg overflow-hidden z-20">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-full shadow-lg overflow-hidden z-20">
                 {suggestions.map((suggestion, index) => (
                   <button
                     key={index}
@@ -341,11 +341,11 @@ export default function Home() {
         {/* View toggle - always visible when there are items or loading */}
         {(foodItems.length > 0 || loadingCards > 0) && (
           <div className="flex justify-center">
-            <div className="inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-1 relative">
+            <div className="inline-flex rounded-full border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-1 relative">
               {/* Sliding background */}
               <motion.div
                 layoutId="activeTab"
-                className="absolute bg-blue-500 rounded-md"
+                className="absolute bg-blue-500 rounded-full"
                 style={{
                   top: '4px',
                   bottom: '4px',
@@ -361,12 +361,12 @@ export default function Home() {
               />
               <button
                 onClick={() => setViewMode('cards')}
-                className={`relative px-4 py-2 text-sm rounded-md transition-colors cursor-pointer ${
+                className={`relative px-3 py-1.5 text-sm rounded-full transition-colors cursor-pointer ${
                   viewMode === 'cards'
                     ? 'text-white'
                     : 'text-zinc-700 dark:text-zinc-300'
                 } ${
-                  viewMode !== 'cards' ? 'before:content-[""] before:absolute before:inset-0.5 before:bg-zinc-100/50 dark:before:bg-zinc-700/50 before:rounded-md before:opacity-0 hover:before:opacity-100 before:transition-opacity before:-z-10' : ''
+                  viewMode !== 'cards' ? 'before:content-[""] before:absolute before:inset-0.5 before:bg-zinc-100/50 dark:before:bg-zinc-700/50 before:rounded-full before:opacity-0 hover:before:opacity-100 before:transition-opacity before:-z-10' : ''
                 }`}
               >
                 Cards
@@ -374,14 +374,14 @@ export default function Home() {
               <button
                 onClick={() => foodItems.length >= 2 && setViewMode('chart')}
                 disabled={foodItems.length < 2}
-                className={`relative px-4 py-2 text-sm rounded-md transition-colors ${
+                className={`relative px-3 py-1.5 text-sm rounded-full transition-colors ${
                   viewMode === 'chart'
                     ? 'text-white'
                     : foodItems.length < 2
                     ? 'text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
                     : 'text-zinc-700 dark:text-zinc-300 cursor-pointer'
                 } ${
-                  viewMode !== 'chart' && foodItems.length >= 2 ? 'before:content-[""] before:absolute before:inset-0.5 before:bg-zinc-100/50 dark:before:bg-zinc-700/50 before:rounded-md before:opacity-0 hover:before:opacity-100 before:transition-opacity before:-z-10' : ''
+                  viewMode !== 'chart' && foodItems.length >= 2 ? 'before:content-[""] before:absolute before:inset-0.5 before:bg-zinc-100/50 dark:before:bg-zinc-700/50 before:rounded-full before:opacity-0 hover:before:opacity-100 before:transition-opacity before:-z-10' : ''
                 }`}
               >
                 Chart

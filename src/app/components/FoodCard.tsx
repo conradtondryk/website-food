@@ -22,7 +22,7 @@ export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProp
   } : food.macros;
 
   return (
-    <div className="w-40 sm:w-80 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-2 sm:p-4 relative">
+    <div className="w-40 sm:w-80 bg-white dark:bg-zinc-800 rounded-2xl shadow-md border border-zinc-200 dark:border-zinc-700 p-2 sm:p-4 relative">
       {/* Remove button */}
       {onRemove && (
         <button
