@@ -1,4 +1,6 @@
-import { FoodItem } from '../types';
+import { useState } from 'react';
+import { FoodItem, FoodPortion } from '../types';
+import { CardLayout, CardHeader, CardContent, CardFooter } from './CardLayout';
 
 interface FoodCardProps {
   food: FoodItem;
@@ -7,22 +9,32 @@ interface FoodCardProps {
 }
 
 export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProps) {
-  // Special handling for eggs to show per egg instead of per 100g
-  const isEgg100g = food.portionSize === '100g' && food.name.toLowerCase().includes('egg');
-  
-  // Scale macros if showing per egg (approx 50g = 0.5x)
-  const displayMacros = isEgg100g ? {
-    calories: Math.round(food.macros.calories * 0.5),
-    protein: Number((food.macros.protein * 0.5).toFixed(2)),
-    unsaturatedFat: Number((food.macros.unsaturatedFat * 0.5).toFixed(2)),
-    saturatedFat: Number((food.macros.saturatedFat * 0.5).toFixed(2)),
-    carbs: Number((food.macros.carbs * 0.5).toFixed(2)),
-    sugars: Number((food.macros.sugars * 0.5).toFixed(2)),
-    fibre: Number((food.macros.fibre * 0.5).toFixed(2)),
-  } : food.macros;
+  // Prepare portions
+  const availablePortions: FoodPortion[] = food.portions && food.portions.length > 0
+    ? food.portions
+    : [{ amount: 1, unit: '100g', gramWeight: 100 }];
+
+  // Find 100g portion index or default to 0
+  const [selectedPortionIndex, setSelectedPortionIndex] = useState<number>(() => {
+    const idx = availablePortions.findIndex(p => p.unit === '100g');
+    return idx >= 0 ? idx : 0;
+  });
+
+  const selectedPortion = availablePortions[selectedPortionIndex];
+  const ratio = selectedPortion.gramWeight / 100;
+
+  const displayMacros = {
+    calories: Math.round(food.macros.calories * ratio),
+    protein: Number((food.macros.protein * ratio).toFixed(2)),
+    unsaturatedFat: Number((food.macros.unsaturatedFat * ratio).toFixed(2)),
+    saturatedFat: Number((food.macros.saturatedFat * ratio).toFixed(2)),
+    carbs: Number((food.macros.carbs * ratio).toFixed(2)),
+    sugars: Number((food.macros.sugars * ratio).toFixed(2)),
+    fibre: Number((food.macros.fibre * ratio).toFixed(2)),
+  };
 
   return (
-    <div className="w-40 sm:w-80 bg-white dark:bg-zinc-800 rounded-2xl shadow-md border border-zinc-200 dark:border-zinc-700 p-2 sm:p-4 relative">
+    <CardLayout>
       {/* Remove button */}
       {onRemove && (
         <button
@@ -47,87 +59,104 @@ export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProp
         </button>
       )}
 
-      {/* Food Name */}
-      <h2 className="text-sm sm:text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100 mb-0.5 sm:mb-1">
-        {food.name}
-      </h2>
-      <p className="text-[10px] sm:text-xs text-center text-zinc-500 dark:text-zinc-400 mb-2 sm:mb-4">
-        {isEgg100g ? 'per 1 large egg (~50g)' : `per ${food.portionSize}`}
-      </p>
-
-      {/* Macros Table - Compact on mobile */}
-      <div className="mb-2 sm:mb-4">
-        <h3 className="text-[10px] sm:text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1 sm:mb-2">
-          nutrition
-        </h3>
-        <table className="w-full text-[10px] sm:text-xs">
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-            <tr>
-              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">calories</td>
-              <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {displayMacros.calories}
-              </td>
-            </tr>
-            <tr>
-              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">protein</td>
-              <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {displayMacros.protein}g
-              </td>
-            </tr>
-            <tr>
-              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">fat</td>
-              <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {(displayMacros.unsaturatedFat + displayMacros.saturatedFat).toFixed(2)}g
-              </td>
-            </tr>
-            <tr>
-              <td className="py-0.5 sm:py-1.5 pl-2 text-zinc-600 dark:text-zinc-400 text-[9px] sm:text-[11px]">of which saturates</td>
-              <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {displayMacros.saturatedFat}g
-              </td>
-            </tr>
-            <tr>
-              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">carbs</td>
-              <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {displayMacros.carbs}g
-              </td>
-            </tr>
-            <tr>
-              <td className="py-0.5 sm:py-1.5 pl-2 text-zinc-600 dark:text-zinc-400 text-[9px] sm:text-[11px]">of which sugars</td>
-              <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {displayMacros.sugars}g
-              </td>
-            </tr>
-            <tr>
-              <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">fibre</td>
-              <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {displayMacros.fibre}g
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {food.sourceUrl && (
-        <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
-          <a
-            href={food.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[9px] sm:text-[10px] text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+      <CardHeader>
+        <div className="h-5 sm:h-7 mb-0.5 sm:mb-1 flex items-center justify-center w-full">
+          <h2 className="text-sm sm:text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100 truncate w-full px-1">
+            {food.name}
+          </h2>
+        </div>
+        
+        <div className="w-full flex justify-center mt-1 mb-2 sm:mb-4">
+           <select
+            value={selectedPortionIndex}
+            onChange={(e) => setSelectedPortionIndex(Number(e.target.value))}
+            className="text-[10px] sm:text-xs text-center bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer max-w-full truncate"
+            style={{ height: '26px' }} // Fixed height to match skeleton
           >
-            source: {food.source === 'usda' ? 'usda fooddata central' : 'ai generated'}
-          </a>
+            {availablePortions.map((portion, index) => (
+              <option key={index} value={index}>
+                per {portion.unit} {portion.unit !== '100g' && `(~${Math.round(portion.gramWeight)}g)`}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+      </CardHeader>
 
-      {!food.sourceUrl && food.source === 'ai' && (
-        <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
-          <span className="text-[9px] sm:text-[10px] text-zinc-400 dark:text-zinc-500">
-            source: ai generated
-          </span>
+      <CardContent>
+        <div className="mb-2 sm:mb-4">
+          {/* Fixed height title */}
+          <div className="h-4 mb-1 sm:mb-2 flex items-center">
+            <h3 className="text-[10px] sm:text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              nutrition
+            </h3>
+          </div>
+          <table className="w-full text-[10px] sm:text-xs">
+            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
+              <tr className="h-5 sm:h-7">
+                <td className="text-zinc-700 dark:text-zinc-300 align-middle">calories</td>
+                <td className="text-right font-medium text-zinc-900 dark:text-zinc-100 align-middle">
+                  {displayMacros.calories}
+                </td>
+              </tr>
+              <tr className="h-5 sm:h-7">
+                <td className="text-zinc-700 dark:text-zinc-300 align-middle">protein</td>
+                <td className="text-right font-medium text-zinc-900 dark:text-zinc-100 align-middle">
+                  {displayMacros.protein}g
+                </td>
+              </tr>
+              <tr className="h-5 sm:h-7">
+                <td className="text-zinc-700 dark:text-zinc-300 align-middle">fat</td>
+                <td className="text-right font-medium text-zinc-900 dark:text-zinc-100 align-middle">
+                  {(displayMacros.unsaturatedFat + displayMacros.saturatedFat).toFixed(2)}g
+                </td>
+              </tr>
+              <tr className="h-5 sm:h-7">
+                <td className="pl-2 text-zinc-600 dark:text-zinc-400 text-[9px] sm:text-[11px] align-middle">of which saturates</td>
+                <td className="text-right font-medium text-zinc-900 dark:text-zinc-100 align-middle">
+                  {displayMacros.saturatedFat}g
+                </td>
+              </tr>
+              <tr className="h-5 sm:h-7">
+                <td className="text-zinc-700 dark:text-zinc-300 align-middle">carbs</td>
+                <td className="text-right font-medium text-zinc-900 dark:text-zinc-100 align-middle">
+                  {displayMacros.carbs}g
+                </td>
+              </tr>
+              <tr className="h-5 sm:h-7">
+                <td className="pl-2 text-zinc-600 dark:text-zinc-400 text-[9px] sm:text-[11px] align-middle">of which sugars</td>
+                <td className="text-right font-medium text-zinc-900 dark:text-zinc-100 align-middle">
+                  {displayMacros.sugars}g
+                </td>
+              </tr>
+              <tr className="h-5 sm:h-7">
+                <td className="text-zinc-700 dark:text-zinc-300 align-middle">fibre</td>
+                <td className="text-right font-medium text-zinc-900 dark:text-zinc-100 align-middle">
+                  {displayMacros.fibre}g
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      )}
-    </div>
+      </CardContent>
+
+      <CardFooter>
+        <div className="h-4 sm:h-5 flex items-center">
+          {food.sourceUrl ? (
+            <a
+              href={food.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[9px] sm:text-[10px] text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors truncate"
+            >
+              source: {food.source === 'usda' ? 'usda fooddata central' : 'ai generated'}
+            </a>
+          ) : (
+            <span className="text-[9px] sm:text-[10px] text-zinc-400 dark:text-zinc-500 truncate">
+              source: {food.source === 'ai' ? 'ai generated' : 'unknown'}
+            </span>
+          )}
+        </div>
+      </CardFooter>
+    </CardLayout>
   );
 }

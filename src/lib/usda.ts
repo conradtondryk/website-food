@@ -8,10 +8,24 @@ interface USDANutrient {
   unitName: string;
 }
 
+interface USDAFoodPortion {
+  id: number;
+  measureUnit: {
+    id: number;
+    name: string;
+    abbreviation: string;
+  };
+  modifier: string;
+  gramWeight: number;
+  amount: number;
+  portionDescription: string;
+}
+
 interface USDAFood {
   fdcId: number;
   description: string;
   foodNutrients: USDANutrient[];
+  foodPortions?: USDAFoodPortion[];
   servingSize?: number;
   servingSizeUnit?: string;
 }
@@ -271,9 +285,43 @@ function mapUSDAToFoodData(usdaFood: USDAFood) {
     return name.trim();
   };
 
+  // Map portions
+  const portions = [];
+  if (usdaFood.foodPortions) {
+    for (const p of usdaFood.foodPortions) {
+      if (p.gramWeight > 0) {
+        let label = p.portionDescription;
+        if (!label) {
+           const unitName = p.measureUnit?.name || 'unit';
+           const modifier = p.modifier ? `, ${p.modifier}` : '';
+           label = `${p.amount} ${unitName}${modifier}`;
+        }
+        portions.push({
+          amount: p.amount || 1,
+          unit: label,
+          gramWeight: p.gramWeight,
+        });
+      }
+    }
+  }
+
+  // Add standard 100g portion if not present (or effectively not present)
+  portions.push({ amount: 1, unit: '100g', gramWeight: 100 });
+  
+  // Deduplicate based on gramWeight (approximate)
+  const uniquePortions = portions.filter((p, index, self) => 
+    index === self.findIndex((t) => (
+      Math.abs(t.gramWeight - p.gramWeight) < 0.1 && t.unit === p.unit
+    ))
+  );
+
+  // Sort by weight
+  uniquePortions.sort((a, b) => a.gramWeight - b.gramWeight);
+
   return {
     name: formatName(usdaFood.description),
     portionSize: '100g',
+    portions: uniquePortions,
     macros: {
       calories: Math.round(calories),
       protein: Number(protein.toFixed(2)),

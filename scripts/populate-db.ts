@@ -119,13 +119,14 @@ async function populateDatabase() {
       if (foodData) {
         await pool.query(
           `INSERT INTO foods (
-            name, portion_size, calories, protein,
+            name, portion_size, portions, calories, protein,
             unsaturated_fat, saturated_fat, carbs, sugars, fibre,
             source, source_url
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
           ON CONFLICT (name) DO UPDATE SET
             portion_size = EXCLUDED.portion_size,
+            portions = EXCLUDED.portions,
             calories = EXCLUDED.calories,
             protein = EXCLUDED.protein,
             unsaturated_fat = EXCLUDED.unsaturated_fat,
@@ -138,6 +139,7 @@ async function populateDatabase() {
           [
             foodData.name,
             foodData.portionSize,
+            JSON.stringify(foodData.portions || []),
             foodData.macros.calories,
             foodData.macros.protein,
             foodData.macros.unsaturatedFat,

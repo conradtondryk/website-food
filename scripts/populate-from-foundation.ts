@@ -37,6 +37,20 @@ interface Nutrient {
   amount: string;
 }
 
+interface FoodPortionCSV {
+    fdc_id: string;
+    amount: string;
+    measure_unit_id: string;
+    portion_description: string;
+    modifier: string;
+    gram_weight: string;
+}
+
+interface MeasureUnitCSV {
+    id: string;
+    name: string;
+}
+
 async function parseCSV<T>(filePath: string): Promise<T[]> {
   return new Promise((resolve, reject) => {
     const results: T[] = [];
@@ -52,9 +66,9 @@ async function populateFromFoundation() {
   console.log('Loading Sample Foods...');
 
   // Load sample food IDs
-  const sampleFoods = await parseCSV<{ fdc_id: string }>(`${DATA_DIR}/sample_food.csv`);
+  const sampleFoods = await parseCSV<{ fdc_id: string }>(`${DATA_DIR}/foundation_food.csv`);
   const sampleIds = new Set(sampleFoods.map(f => f.fdc_id));
-  console.log(`Found ${sampleIds.size} sample foods`);
+  console.log(`Found ${sampleIds.size} foundation foods`);
 
   // Load all foods
   const allFoods = await parseCSV<Food>(`${DATA_DIR}/food.csv`);
@@ -79,6 +93,35 @@ async function populateFromFoundation() {
       parseFloat(nutrient.amount) || 0
     );
   }
+  
+  // Load measures and portions
+  console.log('Loading portions...');
+  const measureUnits = await parseCSV<MeasureUnitCSV>(`${DATA_DIR}/measure_unit.csv`);
+  const measureUnitMap = new Map(measureUnits.map(m => [m.id, m.name]));
+
+  const allPortions = await parseCSV<FoodPortionCSV>(`${DATA_DIR}/food_portion.csv`);
+  const portionsByFood = new Map<string, any[]>();
+
+  for (const portion of allPortions) {
+    if (!portionsByFood.has(portion.fdc_id)) {
+        portionsByFood.set(portion.fdc_id, []);
+    }
+    
+    const unitName = measureUnitMap.get(portion.measure_unit_id) || 'unit';
+    let label = portion.portion_description;
+    if (!label) {
+        const amount = parseFloat(portion.amount);
+        const modifier = portion.modifier ? `, ${portion.modifier}` : '';
+        label = `${amount} ${unitName}${modifier}`;
+    }
+    
+    portionsByFood.get(portion.fdc_id)!.push({
+        amount: parseFloat(portion.amount) || 1,
+        unit: label,
+        gramWeight: parseFloat(portion.gram_weight) || 0
+    });
+  }
+
 
   console.log('\nProcessing foods...');
   let successCount = 0;
@@ -110,17 +153,32 @@ async function populateFromFoundation() {
       .replace(/,\s*(non-enhanced|enhanced)/gi, '')
       .replace(/\s+/g, ' ')
       .trim();
+      
+    // Get portions
+    const rawPortions = portionsByFood.get(food.fdc_id) || [];
+    const portions = rawPortions.map(p => ({
+        amount: p.amount,
+        unit: p.unit, // This is the label constructed above
+        gramWeight: p.gramWeight
+    })).filter(p => p.gramWeight > 0);
+    
+    // Add standard 100g portion
+    portions.push({ amount: 1, unit: '100g', gramWeight: 100 });
+    
+    // Sort portions by weight
+    portions.sort((a, b) => a.gramWeight - b.gramWeight);
 
     try {
       await pool.query(`
         INSERT INTO foods (
-          name, portion_size, calories, protein,
+          name, portion_size, portions, calories, protein,
           unsaturated_fat, saturated_fat, carbs, sugars, fibre,
           source, source_url
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         ON CONFLICT (name) DO UPDATE SET
           portion_size = EXCLUDED.portion_size,
+          portions = EXCLUDED.portions,
           calories = EXCLUDED.calories,
           protein = EXCLUDED.protein,
           unsaturated_fat = EXCLUDED.unsaturated_fat,
@@ -133,6 +191,7 @@ async function populateFromFoundation() {
       `, [
         name,
         '100g',
+        JSON.stringify(portions),
         calories,
         protein,
         unsaturatedFat,

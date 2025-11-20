@@ -1,5 +1,6 @@
 import { sql } from '@vercel/postgres';
 import { Pool } from 'pg';
+import { FoodPortion } from '../app/types';
 
 // Use pg Pool for local development, Vercel will use @vercel/postgres
 const pool = process.env.VERCEL
@@ -23,13 +24,14 @@ async function query(queryText: string, values?: any[]): Promise<{ rows: any[] }
 
 export async function initDatabase() {
   try {
-    await sql`DROP TABLE IF EXISTS foods CASCADE`;
+    await query('DROP TABLE IF EXISTS foods CASCADE');
 
-    await sql`
+    await query(`
       CREATE TABLE foods (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE,
         portion_size VARCHAR(50) NOT NULL,
+        portions JSONB DEFAULT '[]',
         calories INTEGER NOT NULL,
         protein DECIMAL(5,2) NOT NULL,
         unsaturated_fat DECIMAL(5,2) NOT NULL,
@@ -41,9 +43,9 @@ export async function initDatabase() {
         source_url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
 
-    await sql`CREATE INDEX idx_foods_name ON foods(LOWER(name))`;
+    await query('CREATE INDEX idx_foods_name ON foods(LOWER(name))');
 
     console.log('Database initialized successfully');
   } catch (error) {
@@ -124,6 +126,7 @@ export async function searchFoodsInDatabase(searchQuery: string) {
 export async function saveFoodToDatabase(foodData: {
   name: string;
   portionSize: string;
+  portions?: FoodPortion[];
   macros: {
     calories: number;
     protein: number;
@@ -137,27 +140,17 @@ export async function saveFoodToDatabase(foodData: {
   sourceUrl?: string;
 }) {
   try {
-    const result = await sql`
+    // Using query instead of sql template tag to support local pg pool
+    const result = await query(`
       INSERT INTO foods (
-        name, portion_size, calories, protein,
+        name, portion_size, portions, calories, protein,
         unsaturated_fat, saturated_fat, carbs, sugars, fibre,
         source, source_url
       )
-      VALUES (
-        ${foodData.name},
-        ${foodData.portionSize},
-        ${foodData.macros.calories},
-        ${foodData.macros.protein},
-        ${foodData.macros.unsaturatedFat},
-        ${foodData.macros.saturatedFat},
-        ${foodData.macros.carbs},
-        ${foodData.macros.sugars},
-        ${foodData.macros.fibre},
-        ${foodData.source},
-        ${foodData.sourceUrl || null}
-      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       ON CONFLICT (name) DO UPDATE SET
         portion_size = EXCLUDED.portion_size,
+        portions = EXCLUDED.portions,
         calories = EXCLUDED.calories,
         protein = EXCLUDED.protein,
         unsaturated_fat = EXCLUDED.unsaturated_fat,
@@ -168,7 +161,20 @@ export async function saveFoodToDatabase(foodData: {
         source = EXCLUDED.source,
         source_url = EXCLUDED.source_url
       RETURNING *
-    `;
+    `, [
+        foodData.name,
+        foodData.portionSize,
+        JSON.stringify(foodData.portions || []),
+        foodData.macros.calories,
+        foodData.macros.protein,
+        foodData.macros.unsaturatedFat,
+        foodData.macros.saturatedFat,
+        foodData.macros.carbs,
+        foodData.macros.sugars,
+        foodData.macros.fibre,
+        foodData.source,
+        foodData.sourceUrl || null
+    ]);
     return result.rows[0];
   } catch (error) {
     console.error('Error saving food to database:', error);
@@ -183,6 +189,7 @@ export function mapDatabaseRowToFoodItem(row: any) {
     id: crypto.randomUUID(), // Generate temporary ID for UI keying
     name: formatFoodName(row.name),
     portionSize: row.portion_size,
+    portions: row.portions || [],
     macros: {
       calories: Number(row.calories),
       protein: Number(row.protein),
