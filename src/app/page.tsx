@@ -341,13 +341,32 @@ export default function Home() {
         {/* View toggle - always visible when there are items or loading */}
         {(foodItems.length > 0 || loadingCards > 0) && (
           <div className="flex justify-center">
-            <div className="inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-1">
+            <div className="inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-1 relative">
+              {/* Sliding background */}
+              <motion.div
+                layoutId="activeTab"
+                className="absolute bg-blue-500 rounded-md"
+                style={{
+                  top: '4px',
+                  bottom: '4px',
+                  left: viewMode === 'cards' ? '4px' : 'auto',
+                  right: viewMode === 'chart' ? '4px' : 'auto',
+                  width: 'calc(50% - 4px)',
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 500,
+                  damping: 30,
+                }}
+              />
               <button
                 onClick={() => setViewMode('cards')}
-                className={`px-4 py-2 text-sm rounded-md transition-colors cursor-pointer ${
+                className={`relative px-4 py-2 text-sm rounded-md transition-colors cursor-pointer ${
                   viewMode === 'cards'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+                    ? 'text-white'
+                    : 'text-zinc-700 dark:text-zinc-300'
+                } ${
+                  viewMode !== 'cards' ? 'before:content-[""] before:absolute before:inset-0.5 before:bg-zinc-100/50 dark:before:bg-zinc-700/50 before:rounded-md before:opacity-0 hover:before:opacity-100 before:transition-opacity before:-z-10' : ''
                 }`}
               >
                 Cards
@@ -355,12 +374,14 @@ export default function Home() {
               <button
                 onClick={() => foodItems.length >= 2 && setViewMode('chart')}
                 disabled={foodItems.length < 2}
-                className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                className={`relative px-4 py-2 text-sm rounded-md transition-colors ${
                   viewMode === 'chart'
-                    ? 'bg-blue-500 text-white'
+                    ? 'text-white'
                     : foodItems.length < 2
                     ? 'text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
-                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer'
+                    : 'text-zinc-700 dark:text-zinc-300 cursor-pointer'
+                } ${
+                  viewMode !== 'chart' && foodItems.length >= 2 ? 'before:content-[""] before:absolute before:inset-0.5 before:bg-zinc-100/50 dark:before:bg-zinc-700/50 before:rounded-md before:opacity-0 hover:before:opacity-100 before:transition-opacity before:-z-10' : ''
                 }`}
               >
                 Chart
@@ -386,7 +407,7 @@ export default function Home() {
                         transition: { duration: 0.15 }
                       }}
                       transition={{ 
-                        layout: { duration: 0.3, ease: "easeInOut" },
+                        layout: { duration: 0.15, ease: "easeInOut" },
                         opacity: { duration: 0.15 }
                       }}
                       className="flex-shrink-0"
