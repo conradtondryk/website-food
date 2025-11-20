@@ -320,7 +320,7 @@ export default function Home() {
 
             {/* Suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-full shadow-lg overflow-hidden z-20">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-2xl shadow-lg overflow-hidden z-20">
                 {suggestions.map((suggestion, index) => (
                   <button
                     key={index}
