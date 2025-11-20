@@ -11,8 +11,10 @@ export default function FoodCardSkeleton() {
         </div>
         
         {/* Portion Size (Dropdown match) */}
-        <div className="w-full flex justify-center mt-1 mb-2 sm:mb-4">
-            <Skeleton className="w-1/2" style={{ height: '26px' }} />
+        <div className="w-full flex justify-center mt-1 mb-2 sm:mb-4 h-[26px]">
+            <div className="w-3/4">
+                <Skeleton className="w-full h-full" />
+            </div>
         </div>
       </CardHeader>
 

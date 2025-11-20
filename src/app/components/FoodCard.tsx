@@ -66,19 +66,21 @@ export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProp
           </h2>
         </div>
         
-        <div className="w-full flex justify-center mt-1 mb-2 sm:mb-4">
-           <select
-            value={selectedPortionIndex}
-            onChange={(e) => setSelectedPortionIndex(Number(e.target.value))}
-            className="text-[10px] sm:text-xs text-center bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer max-w-full truncate"
-            style={{ height: '26px' }} // Fixed height to match skeleton
-          >
-            {availablePortions.map((portion, index) => (
-              <option key={index} value={index}>
-                per {portion.unit} {portion.unit !== '100g' && `(~${Math.round(portion.gramWeight)}g)`}
-              </option>
-            ))}
-          </select>
+        <div className="w-full flex justify-center mt-1 mb-2 sm:mb-4 h-[26px]">
+           <div className="w-3/4">
+             <select
+              value={selectedPortionIndex}
+              onChange={(e) => setSelectedPortionIndex(Number(e.target.value))}
+              className="w-full text-[10px] sm:text-xs text-center bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer truncate"
+              style={{ height: '26px' }}
+            >
+              {availablePortions.map((portion, index) => (
+                <option key={index} value={index}>
+                  per {portion.unit} {portion.unit !== '100g' && `(~${Math.round(portion.gramWeight)}g)`}
+                </option>
+              ))}
+            </select>
+           </div>
         </div>
       </CardHeader>
 
