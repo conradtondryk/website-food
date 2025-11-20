@@ -377,7 +377,7 @@ export default function Home() {
                 <AnimatePresence mode="popLayout">
                   {foodItems.map((food, index) => (
                     <motion.div
-                      key={food.name}
+                      key={`${food.name}-${index}`}
                       layout
                       transition={{ duration: 0.15 }}
                       exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
