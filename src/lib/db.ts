@@ -87,6 +87,11 @@ export async function searchFoodsInDatabase(searchQuery: string) {
        WHERE ${whereConditions}
        ORDER BY
          CASE
+           -- Downrank dried/powdered/dehydrated foods (checked first so they get stuck with low rank)
+           WHEN LOWER(name) ~ '\\y(dried|dry|powder|powdered|dehydrated|flake|flakes)\\y' THEN 10
+           -- Downrank restaurant foods and specific flours
+           WHEN LOWER(name) ~ '\\y(restaurant|fast food|flour|starch)\\y' THEN 9
+           
            -- Exact match is always first
            WHEN LOWER(name) = LOWER($${paramCount + 1}) THEN 1
            -- Starts with query followed by space or comma (e.g. "Egg, whole" for "egg")
@@ -99,10 +104,7 @@ export async function searchFoodsInDatabase(searchQuery: string) {
            WHEN LOWER(name) ~ '\\y(fried|grilled|baked|roasted|cooked|boiled|steamed|raw)\\y' THEN 5
            -- Prefer shorter names (implicitly simpler/more common)
            WHEN array_length(string_to_array(name, ' '), 1) <= 3 THEN 6
-           -- Downrank restaurant foods and specific flours unless explicitly searched
-           WHEN LOWER(name) ~ '\\y(restaurant|fast food|flour|starch)\\y' THEN 9
-           -- Downrank dried/powdered/dehydrated foods (force these lower even if they are short names)
-           WHEN LOWER(name) ~ '\\y(dried|dry|powder|powdered|dehydrated|flake|flakes)\\y' THEN 10
+           
            -- Everything else last
            ELSE 7
          END,
@@ -178,6 +180,7 @@ import { formatFoodName } from './format';
 
 export function mapDatabaseRowToFoodItem(row: any) {
   return {
+    id: crypto.randomUUID(), // Generate temporary ID for UI keying
     name: formatFoodName(row.name),
     portionSize: row.portion_size,
     macros: {

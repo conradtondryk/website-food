@@ -9,6 +9,7 @@ export interface FoodMacros {
 }
 
 export interface FoodItem {
+  id: string; // Unique identifier for React keys
   name: string;
   portionSize: string;
   macros: FoodMacros;

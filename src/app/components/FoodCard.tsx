@@ -7,6 +7,20 @@ interface FoodCardProps {
 }
 
 export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProps) {
+  // Special handling for eggs to show per egg instead of per 100g
+  const isEgg100g = food.portionSize === '100g' && food.name.toLowerCase().includes('egg');
+  
+  // Scale macros if showing per egg (approx 50g = 0.5x)
+  const displayMacros = isEgg100g ? {
+    calories: Math.round(food.macros.calories * 0.5),
+    protein: Number((food.macros.protein * 0.5).toFixed(2)),
+    unsaturatedFat: Number((food.macros.unsaturatedFat * 0.5).toFixed(2)),
+    saturatedFat: Number((food.macros.saturatedFat * 0.5).toFixed(2)),
+    carbs: Number((food.macros.carbs * 0.5).toFixed(2)),
+    sugars: Number((food.macros.sugars * 0.5).toFixed(2)),
+    fibre: Number((food.macros.fibre * 0.5).toFixed(2)),
+  } : food.macros;
+
   return (
     <div className="w-40 sm:w-80 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 p-2 sm:p-4 relative">
       {/* Remove button */}
@@ -38,7 +52,7 @@ export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProp
         {food.name}
       </h2>
       <p className="text-[10px] sm:text-xs text-center text-zinc-500 dark:text-zinc-400 mb-2 sm:mb-4">
-        per {food.portionSize}
+        {isEgg100g ? 'per 1 large egg (~50g)' : `per ${food.portionSize}`}
       </p>
 
       {/* Macros Table - Compact on mobile */}
@@ -51,43 +65,43 @@ export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProp
             <tr>
               <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">calories</td>
               <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {food.macros.calories}
+                {displayMacros.calories}
               </td>
             </tr>
             <tr>
               <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">protein</td>
               <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {food.macros.protein}g
+                {displayMacros.protein}g
               </td>
             </tr>
             <tr>
               <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">fat</td>
               <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {(food.macros.unsaturatedFat + food.macros.saturatedFat).toFixed(2)}g
+                {(displayMacros.unsaturatedFat + displayMacros.saturatedFat).toFixed(2)}g
               </td>
             </tr>
             <tr>
               <td className="py-0.5 sm:py-1.5 pl-2 text-zinc-600 dark:text-zinc-400 text-[9px] sm:text-[11px]">of which saturates</td>
               <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {food.macros.saturatedFat}g
+                {displayMacros.saturatedFat}g
               </td>
             </tr>
             <tr>
               <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">carbs</td>
               <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {food.macros.carbs}g
+                {displayMacros.carbs}g
               </td>
             </tr>
             <tr>
               <td className="py-0.5 sm:py-1.5 pl-2 text-zinc-600 dark:text-zinc-400 text-[9px] sm:text-[11px]">of which sugars</td>
               <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {food.macros.sugars}g
+                {displayMacros.sugars}g
               </td>
             </tr>
             <tr>
               <td className="py-0.5 sm:py-1.5 text-zinc-700 dark:text-zinc-300">fibre</td>
               <td className="py-0.5 sm:py-1.5 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                {food.macros.fibre}g
+                {displayMacros.fibre}g
               </td>
             </tr>
           </tbody>

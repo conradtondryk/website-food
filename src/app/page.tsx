@@ -374,13 +374,21 @@ export default function Home() {
           <div className="flex-1 flex gap-3 sm:gap-6 overflow-x-auto pb-4 min-h-[400px] items-start">
             {viewMode === 'cards' ? (
               <>
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence mode="popLayout" initial={false}>
                   {foodItems.map((food, index) => (
                     <motion.div
-                      key={`${food.name}-${index}`}
+                      key={food.id}
                       layout
-                      transition={{ duration: 0.15 }}
-                      exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+                      initial={{ opacity: 1, scale: 1 }}
+                      exit={{ 
+                        opacity: 0, 
+                        scale: 0.9,
+                        transition: { duration: 0.15 }
+                      }}
+                      transition={{ 
+                        layout: { duration: 0.3, ease: "easeInOut" },
+                        opacity: { duration: 0.15 }
+                      }}
                       className="flex-shrink-0"
                     >
                       <FoodCard
