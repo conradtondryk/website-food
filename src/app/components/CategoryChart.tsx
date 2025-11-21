@@ -11,6 +11,7 @@ interface CategoryChartProps {
 type Category = {
   key: keyof FoodItem['macros'] | 'totalFat' | 'all';
   label: string;
+  shortLabel?: string;
   color: string;
   unit: string;
   getValue?: (food: FoodItem) => number;
@@ -27,9 +28,9 @@ const categories: Category[] = [
     unit: 'g',
     getValue: (food) => food.macros.unsaturatedFat + food.macros.saturatedFat
   },
-  { key: 'saturatedFat', label: 'of which Saturates', color: '#ef4444', unit: 'g' },
+  { key: 'saturatedFat', label: 'of which Saturates', shortLabel: 'Saturates', color: '#ef4444', unit: 'g' },
   { key: 'carbs', label: 'Carbs', color: '#f59e0b', unit: 'g' },
-  { key: 'sugars', label: 'of which Sugars', color: '#ec4899', unit: 'g' },
+  { key: 'sugars', label: 'of which Sugars', shortLabel: 'Sugars', color: '#ec4899', unit: 'g' },
   { key: 'fibre', label: 'Fibre', color: '#8b5cf6', unit: 'g' },
 ];
 
@@ -43,9 +44,9 @@ const macroCategories: Category[] = [
     unit: 'g',
     getValue: (food) => food.macros.unsaturatedFat + food.macros.saturatedFat
   },
-  { key: 'saturatedFat', label: 'of which Saturates', color: '#ef4444', unit: 'g' },
+  { key: 'saturatedFat', label: 'of which Saturates', shortLabel: 'Saturates', color: '#ef4444', unit: 'g' },
   { key: 'carbs', label: 'Carbs', color: '#f59e0b', unit: 'g' },
-  { key: 'sugars', label: 'of which Sugars', color: '#ec4899', unit: 'g' },
+  { key: 'sugars', label: 'of which Sugars', shortLabel: 'Sugars', color: '#ec4899', unit: 'g' },
   { key: 'fibre', label: 'Fibre', color: '#8b5cf6', unit: 'g' },
 ];
 
@@ -75,7 +76,8 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
   const getAllViewData = () => {
     return macroCategories.map((category) => {
       const entry: any = {
-        name: category.label,
+        name: category.shortLabel || category.label,
+        fullLabel: category.label, // Keep full label for tooltip
         unit: category.unit,
       };
       
@@ -133,6 +135,7 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
           <XAxis
             dataKey="name"
             tick={{ fill: '#9ca3af', fontSize: 10 }}
+            interval={0} // Force all ticks to show
             angle={selectedCategory.key === 'all' ? 0 : -45}
             textAnchor={selectedCategory.key === 'all' ? 'middle' : 'end'}
             height={selectedCategory.key === 'all' ? 40 : 60}
@@ -149,9 +152,18 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
               if (selectedCategory.key === 'all') {
                 const payload = props?.payload;
                 const unit = payload?.unit || '';
+                // Use full label if available in payload, though here we are iterating over foods so 'name' is food name
+                // The label of the tooltip is usually the XAxis label (category name)
                 return [`${value}${unit}`, name];
               }
               return [`${value}${selectedCategory.unit}`, selectedCategory.label];
+            }}
+            labelFormatter={(label, payload) => {
+               // If we have fullLabel in payload, use it
+               if (payload && payload.length > 0 && payload[0].payload.fullLabel) {
+                   return payload[0].payload.fullLabel;
+               }
+               return label;
             }}
             cursor={false}
           />
