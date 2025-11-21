@@ -9,7 +9,7 @@ interface CategoryChartProps {
 }
 
 type Category = {
-  key: keyof FoodItem['macros'] | 'totalFat' | 'all';
+  key: keyof FoodItem['macros'] | 'totalFat' | 'all' | 'ratios';
   label: string;
   shortLabel?: string;
   color: string;
@@ -32,6 +32,7 @@ const categories: Category[] = [
   { key: 'carbs', label: 'Carbs', color: '#f59e0b', unit: 'g' },
   { key: 'sugars', label: 'of which Sugars', shortLabel: 'Sugars', color: '#ec4899', unit: 'g' },
   { key: 'fibre', label: 'Fibre', color: '#8b5cf6', unit: 'g' },
+  { key: 'ratios', label: 'Ratios', color: '#06b6d4', unit: 'g/kcal' },
 ];
 
 const macroCategories: Category[] = [
@@ -48,6 +49,12 @@ const macroCategories: Category[] = [
   { key: 'carbs', label: 'Carbs', color: '#f59e0b', unit: 'g' },
   { key: 'sugars', label: 'of which Sugars', shortLabel: 'Sugars', color: '#ec4899', unit: 'g' },
   { key: 'fibre', label: 'Fibre', color: '#8b5cf6', unit: 'g' },
+];
+
+const ratioCategories: Category[] = [
+  { key: 'protein', label: 'Protein per Calorie', shortLabel: 'Protein/kcal', color: '#3b82f6', unit: 'g/kcal' },
+  { key: 'totalFat', label: 'Fat per Calorie', shortLabel: 'Fat/kcal', color: '#10b981', unit: 'g/kcal', getValue: (food) => food.macros.unsaturatedFat + food.macros.saturatedFat },
+  { key: 'carbs', label: 'Carbs per Calorie', shortLabel: 'Carbs/kcal', color: '#f59e0b', unit: 'g/kcal' },
 ];
 
 // Generate colors for foods
@@ -92,8 +99,37 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
     });
   };
 
+  // Generate data for "Ratios" view
+  // Structure: One entry per ratio type (protein/kcal, fat/kcal, carbs/kcal)
+  // X-axis will show ratio names
+  // Each ratio will have grouped bars (one per food)
+  const getRatiosViewData = () => {
+    return ratioCategories.map((category) => {
+      const entry: any = {
+        name: category.shortLabel || category.label,
+        fullLabel: category.label, // Keep full label for tooltip
+        unit: category.unit,
+      };
+      
+      foods.forEach((food, index) => {
+        const macroValue = category.getValue
+          ? category.getValue(food)
+          : food.macros[category.key as keyof FoodItem['macros']];
+        // Calculate ratio: macro per calorie, handling division by zero
+        const ratio = food.macros.calories > 0 
+          ? macroValue / food.macros.calories 
+          : 0;
+        entry[food.name] = ratio;
+      });
+      
+      return entry;
+    });
+  };
+
   const chartData = selectedCategory.key === 'all' 
     ? getAllViewData()
+    : selectedCategory.key === 'ratios'
+    ? getRatiosViewData()
     : foods.map((food) => ({
         name: food.name,
         value: selectedCategory.getValue
@@ -125,7 +161,7 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
       </div>
 
       <div className="[&_*]:outline-none [&_*]:focus:outline-none">
-        <ResponsiveContainer width="100%" height={selectedCategory.key === 'all' ? 300 : 200}>
+        <ResponsiveContainer width="100%" height={selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? 300 : 200}>
         <BarChart 
           data={chartData} 
           style={{ cursor: 'default' }}
@@ -136,9 +172,9 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
             dataKey="name"
             tick={{ fill: '#9ca3af', fontSize: 10 }}
             interval={0} // Force all ticks to show
-            angle={selectedCategory.key === 'all' ? 0 : -45}
-            textAnchor={selectedCategory.key === 'all' ? 'middle' : 'end'}
-            height={selectedCategory.key === 'all' ? 40 : 60}
+            angle={selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? 0 : -45}
+            textAnchor={selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? 'middle' : 'end'}
+            height={selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? 40 : 60}
           />
           <YAxis
             tick={{ fill: '#9ca3af', fontSize: 10 }}
@@ -149,12 +185,14 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
             labelStyle={{ color: '#f3f4f6' }}
             itemStyle={{ color: '#f3f4f6' }}
             formatter={(value: any, name: string, props: any) => {
-              if (selectedCategory.key === 'all') {
+              if (selectedCategory.key === 'all' || selectedCategory.key === 'ratios') {
                 const payload = props?.payload;
                 const unit = payload?.unit || '';
-                // Use full label if available in payload, though here we are iterating over foods so 'name' is food name
-                // The label of the tooltip is usually the XAxis label (category name)
-                return [`${value}${unit}`, name];
+                // Format ratio values to show more decimal places
+                const formattedValue = selectedCategory.key === 'ratios' 
+                  ? Number(value).toFixed(4)
+                  : value;
+                return [`${formattedValue}${unit}`, name];
               }
               return [`${value}${selectedCategory.unit}`, selectedCategory.label];
             }}
@@ -167,7 +205,7 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
             }}
             cursor={false}
           />
-          {selectedCategory.key === 'all' ? (
+          {selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? (
             <>
               {foods.map((food, index) => (
                 <Bar
