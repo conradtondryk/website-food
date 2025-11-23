@@ -6,6 +6,7 @@ import FoodCard from './components/FoodCard';
 import FoodCardSkeleton from './components/FoodCardSkeleton';
 import WinnerCard from './components/WinnerCard';
 import CategoryChart from './components/CategoryChart';
+import InfoHoverCard from './components/InfoHoverCard';
 import { FoodItem, Winner } from './types';
 
 export default function Home() {
@@ -293,6 +294,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black">
+      <InfoHoverCard />
       {/* Top search bar */}
       <header className="sticky top-0 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-700 px-4 sm:px-8 py-4">
         <div className="max-w-7xl mx-auto">
