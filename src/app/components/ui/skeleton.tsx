@@ -1,8 +1,5 @@
 import { HTMLAttributes } from 'react';
-
-function cn(...classes: (string | undefined | false)[]) {
-  return classes.filter(Boolean).join(' ');
-}
+import { cn } from '@/lib/utils';
 
 function Skeleton({
   className,
