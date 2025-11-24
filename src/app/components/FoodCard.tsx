@@ -34,7 +34,7 @@ export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProp
   };
 
   return (
-    <CardLayout>
+    <CardLayout className="h-full">
       {/* Remove button */}
       {onRemove && (
         <button

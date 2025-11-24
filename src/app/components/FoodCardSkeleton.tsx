@@ -3,7 +3,7 @@ import { CardLayout, CardHeader, CardContent, CardFooter } from './CardLayout';
 
 export default function FoodCardSkeleton() {
   return (
-    <CardLayout>
+    <CardLayout className="h-full">
       <CardHeader>
         {/* Food Name - Fixed height container matches FoodCard */}
         <div className="h-5 sm:h-7 mb-0.5 sm:mb-1 flex items-center justify-center w-full">
