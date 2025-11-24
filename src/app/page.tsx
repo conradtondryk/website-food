@@ -460,25 +460,23 @@ export default function Home() {
               <>
                 <AnimatePresence mode="popLayout" initial={false}>
                   {foodItems.map((food, index) => (
-                    <div
+                    <motion.div
                       key={food.id}
                       className="flex-shrink-0"
-                      ref={(el) => {
-                        if (el) cardRefs.current.set(food.id, el);
-                        else cardRefs.current.delete(food.id);
-                      }}
-                    >
-                    <motion.div
                       layout
                       initial={{ opacity: 1, scale: 1 }}
-                      exit={{ 
-                        opacity: 0, 
+                      exit={{
+                        opacity: 0,
                         scale: 0.9,
                         transition: { duration: 0.15 }
                       }}
-                      transition={{ 
+                      transition={{
                         layout: { duration: 0.15, ease: "easeInOut" },
                         opacity: { duration: 0.15 }
+                      }}
+                      ref={(el) => {
+                        if (el) cardRefs.current.set(food.id, el);
+                        else cardRefs.current.delete(food.id);
                       }}
                     >
                       <FoodCard
@@ -487,7 +485,6 @@ export default function Home() {
                         onRemove={() => handleRemoveFood(index)}
                       />
                     </motion.div>
-                    </div>
                   ))}
                 </AnimatePresence>
                 {/* Show skeleton cards while loading */}
