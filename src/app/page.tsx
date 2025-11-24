@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FoodCard from './components/FoodCard';
 import FoodCardSkeleton from './components/FoodCardSkeleton';
@@ -22,6 +22,24 @@ export default function Home() {
   const [suggestions, setSuggestions] = useState<Array<{ displayName: string; originalName: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    if (showSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSuggestions]);
 
   useEffect(() => {
     if (foodQuery.trim().length < 2) {
@@ -308,7 +326,7 @@ export default function Home() {
               <p className="text-sm text-blue-700 dark:text-blue-300">{error}</p>
             </div>
           )}
-          <div className="max-w-md mx-auto relative">
+          <div ref={searchContainerRef} className="max-w-md mx-auto relative">
             <input
               type="text"
               value={foodQuery}
