@@ -23,10 +23,8 @@ export default function Home() {
   const [suggestions, setSuggestions] = useState<Array<{ displayName: string; originalName: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
-  const [maxCardHeight, setMaxCardHeight] = useState<number | undefined>(undefined);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -93,33 +91,6 @@ export default function Home() {
       setShowSlowLoadingMessage(false);
     }
   }, [loadingCards, foodItems.length]);
-
-  useEffect(() => {
-    if (foodItems.length === 0) {
-      setMaxCardHeight(undefined);
-      return;
-    }
-
-    const observer = new ResizeObserver(() => {
-      let max = 0;
-      cardRefs.current.forEach((el) => {
-        if (el) {
-          // Use scrollHeight to get full height including overflow if any, 
-          // or offsetHeight for visible height. offsetHeight is usually correct for cards.
-          // We want the content height, so let's rely on the card's natural height.
-          max = Math.max(max, el.offsetHeight);
-        }
-      });
-      if (max > 0) setMaxCardHeight(max);
-    });
-
-    // Observe all current card refs
-    cardRefs.current.forEach((el) => {
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, [foodItems]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFoodQuery(e.target.value);
@@ -455,14 +426,13 @@ export default function Home() {
 
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Food cards or chart - scrollable horizontally on mobile */}
-          <div className="flex-1 flex gap-3 sm:gap-6 overflow-x-auto pb-4 items-start">
+          <div className="flex-1 grid grid-flow-col auto-cols-max gap-3 sm:gap-6 overflow-x-auto pb-4 items-stretch">
             {viewMode === 'cards' ? (
               <>
                 <AnimatePresence mode="popLayout" initial={false}>
                   {foodItems.map((food, index) => (
                     <motion.div
                       key={food.id}
-                      className="flex-shrink-0"
                       layout
                       initial={{ opacity: 1, scale: 1 }}
                       exit={{
@@ -473,10 +443,6 @@ export default function Home() {
                       transition={{
                         layout: { duration: 0.15, ease: "easeInOut" },
                         opacity: { duration: 0.15 }
-                      }}
-                      ref={(el) => {
-                        if (el) cardRefs.current.set(food.id, el);
-                        else cardRefs.current.delete(food.id);
                       }}
                     >
                       <FoodCard
@@ -489,17 +455,14 @@ export default function Home() {
                 </AnimatePresence>
                 {/* Show skeleton cards while loading */}
                 {[...Array(loadingCards)].map((_, index) => (
-                  <div key={`skeleton-${index}`} className="flex-shrink-0">
+                  <div key={`skeleton-${index}`}>
                     <FoodCardSkeleton />
                   </div>
                 ))}
 
                 {/* Add Food Button */}
                 {foodItems.length > 0 && (
-                  <div 
-                    className="flex-shrink-0 flex flex-col"
-                    style={{ height: maxCardHeight ? `${maxCardHeight}px` : 'auto' }}
-                  >
+                  <div>
                     <AddFoodCard onClick={handleFocusSearch} />
                   </div>
                 )}

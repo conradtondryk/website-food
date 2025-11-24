@@ -6,12 +6,14 @@ interface AddFoodCardProps {
 
 export default function AddFoodCard({ onClick }: AddFoodCardProps) {
   return (
-    <button 
-      onClick={onClick}
-      className="group focus:outline-none text-left h-full"
-      aria-label="Add food to compare"
+    <CardLayout
+      className="h-full items-center justify-center border-dashed border-2 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all cursor-pointer"
     >
-      <CardLayout className="h-full items-center justify-center border-dashed border-2 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all cursor-pointer">
+      <button
+        onClick={onClick}
+        className="group focus:outline-none text-left w-full h-full flex flex-col items-center justify-center"
+        aria-label="Add food to compare"
+      >
         <div className="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -30,8 +32,8 @@ export default function AddFoodCard({ onClick }: AddFoodCardProps) {
           </svg>
           <span className="text-xs sm:text-base font-medium text-center px-2">Add Food to Compare</span>
         </div>
-      </CardLayout>
-    </button>
+      </button>
+    </CardLayout>
   );
 }
 
