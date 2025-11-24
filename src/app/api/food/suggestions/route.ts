@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchFoodsInDatabase } from '@/lib/db';
-import { formatFoodName } from '@/lib/format';
+import { foods } from '../foods';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,24 +12,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const normalizedName = foodName.trim().toLowerCase();
+    const normalizedInput = foodName.trim().toLowerCase();
 
-    // Query database for suggestions
-    const results = await searchFoodsInDatabase(normalizedName);
-    if (results && results.length > 0) {
-      const uniqueSuggestions = new Map();
+    // Filter foods from the static list
+    const results = foods.filter(food => 
+      food.name.toLowerCase().includes(normalizedInput)
+    );
 
-      results.forEach(food => {
-        const displayName = formatFoodName(food.name);
-        if (!uniqueSuggestions.has(displayName)) {
-          uniqueSuggestions.set(displayName, {
-            displayName,
-            originalName: food.name
-          });
-        }
-      });
-
-      const suggestions = Array.from(uniqueSuggestions.values()).slice(0, 5);
+    if (results.length > 0) {
+      // Map to suggestion format
+      const suggestions = results.slice(0, 5).map(food => ({
+        displayName: food.name,
+        originalName: food.name
+      }));
 
       return NextResponse.json({
         suggestions

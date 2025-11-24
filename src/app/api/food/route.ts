@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFoodByName, mapDatabaseRowToFoodItem, searchFoodsInDatabase } from '@/lib/db';
+import { foods } from './foods';
+import { FoodItem } from '@/app/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,16 +15,38 @@ export async function POST(request: NextRequest) {
 
     const normalizedName = foodName.trim().toLowerCase();
 
-    // Try exact match first
-    const exactMatch = await getFoodByName(normalizedName);
-    if (exactMatch) {
-      return NextResponse.json(mapDatabaseRowToFoodItem(exactMatch));
-    }
+    // Find food in static list
+    const food = foods.find(f => f.name.toLowerCase() === normalizedName);
 
-    // Try fuzzy search
-    const dbMatches = await searchFoodsInDatabase(normalizedName);
-    if (dbMatches && dbMatches.length > 0) {
-      return NextResponse.json(mapDatabaseRowToFoodItem(dbMatches[0]));
+    if (food) {
+      // Always include 100g as the first option
+      const defaultPortion = { amount: 1, unit: '100g', gramWeight: 100 };
+      
+      const otherPortions = food.portions?.map(p => ({
+          amount: 1,
+          unit: p.name,
+          gramWeight: p.weight
+      })) || [];
+
+      const allPortions = [defaultPortion, ...otherPortions];
+
+      const foodItem: FoodItem = {
+        id: food.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        name: food.name,
+        portionSize: '100g', // Default label
+        portions: allPortions,
+        macros: {
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          unsaturatedFat: food.fats,
+          saturatedFat: 0, 
+          sugars: 0,
+          fibre: 0
+        },
+        source: 'ai'
+      };
+      return NextResponse.json(foodItem);
     }
 
     return NextResponse.json(
