@@ -30,7 +30,7 @@ export default function InfoHoverCard() {
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
               a food nutrition and comparison tool.            </p>
             <a
-              href="https://portfolio.ctondryk.dev"
+              href="https://ctondryk.dev"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
