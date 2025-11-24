@@ -66,12 +66,12 @@ export default function Home() {
           setShowSuggestions(true);
         } else {
           setSuggestions([]);
-          setShowSuggestions(false);
+          setShowSuggestions(true); // Still show dropdown to display "no results"
         }
       } catch (error) {
         console.error('Error fetching suggestions:', error);
         setSuggestions([]);
-        setShowSuggestions(false);
+        setShowSuggestions(true); // Still show dropdown to display "no results"
       }
     };
 
@@ -376,17 +376,23 @@ export default function Home() {
             />
 
             {/* Suggestions dropdown */}
-            {showSuggestions && suggestions.length > 0 && (
+            {showSuggestions && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-2xl shadow-lg overflow-hidden z-20">
-                {suggestions.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="w-full px-4 py-3 text-left text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700 last:border-b-0 cursor-pointer"
-                  >
-                    {suggestion.displayName}
-                  </button>
-                ))}
+                {suggestions.length > 0 ? (
+                  suggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="w-full px-4 py-3 text-left text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700 last:border-b-0 cursor-pointer"
+                    >
+                      {suggestion.displayName}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-center text-zinc-500 dark:text-zinc-400">
+                    no results found
+                  </div>
+                )}
               </div>
             )}
           </div>
