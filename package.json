@@ -12,6 +12,7 @@
     "populate-excel": "tsx scripts/populate-from-excel.ts"
   },
   "dependencies": {
+    "@radix-ui/react-select": "^2.2.6",
     "@supabase/supabase-js": "^2.81.1",
     "@types/pg": "^8.15.6",
     "@vercel/postgres": "^0.10.0",

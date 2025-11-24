@@ -1,6 +1,15 @@
+'use client';
+
 import { useState } from 'react';
 import { FoodItem, FoodPortion } from '../types';
 import { CardLayout, CardHeader, CardContent, CardFooter } from './CardLayout';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/components/ui/select';
 
 interface FoodCardProps {
   food: FoodItem;
@@ -15,12 +24,12 @@ export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProp
     : [{ amount: 1, unit: '100g', gramWeight: 100 }];
 
   // Find 100g portion index or default to 0
-  const [selectedPortionIndex, setSelectedPortionIndex] = useState<number>(() => {
+  const [selectedPortionIndex, setSelectedPortionIndex] = useState<string>(() => {
     const idx = availablePortions.findIndex(p => p.unit === '100g');
-    return idx >= 0 ? idx : 0;
+    return (idx >= 0 ? idx : 0).toString();
   });
 
-  const selectedPortion = availablePortions[selectedPortionIndex];
+  const selectedPortion = availablePortions[parseInt(selectedPortionIndex)];
   const ratio = selectedPortion.gramWeight / 100;
 
   const displayMacros = {
@@ -66,21 +75,21 @@ export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProp
           </h2>
         </div>
         
-        <div className="w-full flex justify-center mt-1 mb-2 sm:mb-4 h-[26px]">
-           <div className="w-3/4">
-             <select
-              value={selectedPortionIndex}
-              onChange={(e) => setSelectedPortionIndex(Number(e.target.value))}
-              className="w-full text-[10px] sm:text-xs text-center bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer truncate"
-              style={{ height: '26px' }}
-            >
-              {availablePortions.map((portion, index) => (
-                <option key={index} value={index}>
-                  per {portion.unit} {portion.unit !== '100g' && `(~${Math.round(portion.gramWeight)}g)`}
-                </option>
-              ))}
-            </select>
-           </div>
+        <div className="w-full flex justify-center mt-1 mb-2 sm:mb-4">
+          <div className="w-3/4">
+            <Select value={selectedPortionIndex} onValueChange={setSelectedPortionIndex}>
+              <SelectTrigger className="w-full text-[10px] sm:text-xs h-[26px] px-2 justify-center text-zinc-600 dark:text-zinc-400 cursor-pointer" size="sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availablePortions.map((portion, index) => (
+                  <SelectItem key={index} value={index.toString()} className="text-[10px] sm:text-xs cursor-pointer">
+                    per {portion.unit} {portion.unit !== '100g' && `(~${Math.round(portion.gramWeight)}g)`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardHeader>
 
