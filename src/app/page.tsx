@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FoodCard from './components/FoodCard';
 import FoodCardSkeleton from './components/FoodCardSkeleton';
+import AddFoodCard from './components/AddFoodCard';
 import WinnerCard from './components/WinnerCard';
 import CategoryChart from './components/CategoryChart';
 import InfoHoverCard from './components/InfoHoverCard';
@@ -23,6 +24,7 @@ export default function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -310,6 +312,11 @@ export default function Home() {
     }
   };
 
+  const handleFocusSearch = () => {
+    searchInputRef.current?.focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black">
       <InfoHoverCard />
@@ -328,6 +335,7 @@ export default function Home() {
           )}
           <div ref={searchContainerRef} className="max-w-md mx-auto relative">
             <input
+              ref={searchInputRef}
               type="text"
               value={foodQuery}
               onChange={handleInputChange}
@@ -446,6 +454,14 @@ export default function Home() {
                     <FoodCardSkeleton />
                   </div>
                 ))}
+
+                {/* Add Food Button */}
+                {foodItems.length > 0 && (
+                  <div className="flex-shrink-0 self-center">
+                    <AddFoodCard onClick={handleFocusSearch} />
+                  </div>
+                )}
+
                 {/* Show slow loading message for cold start */}
                 {showSlowLoadingMessage && (
                   <div className="flex-shrink-0 flex items-center justify-center w-40 sm:w-80">
