@@ -35,7 +35,7 @@ export default function InfoHoverCard() {
               rel="noopener noreferrer"
               className="text-sm text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
             >
-              portfolio.ctondryk.dev
+              ctondryk.dev
               <svg
                 className="w-3 h-3"
                 fill="none"
