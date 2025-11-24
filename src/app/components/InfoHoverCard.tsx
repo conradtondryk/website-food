@@ -7,7 +7,7 @@ export default function InfoHoverCard() {
 
   return (
     <div
-      className="fixed top-4 left-4 z-50"
+      className="hidden md:block fixed top-4 left-4 z-50"
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >
