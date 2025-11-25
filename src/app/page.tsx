@@ -311,7 +311,11 @@ export default function Home() {
   const handleFocusSearch = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => {
-      searchInputRef.current?.focus();
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+        // Trigger keyboard on mobile devices
+        searchInputRef.current.click();
+      }
       setShowCommandList(true);
     }, 300);
   };
