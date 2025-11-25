@@ -329,7 +329,7 @@ export default function Home() {
             </div>
           )}
           <div ref={searchContainerRef} className="max-w-md mx-auto relative">
-            <Command className="rounded-lg border shadow-md">
+            <Command className="rounded-lg border shadow-md" shouldFilter={false}>
               <CommandInput
                 placeholder="enter food item..."
                 value={foodQuery}
@@ -347,7 +347,7 @@ export default function Home() {
                   transition={{ duration: 0.1, ease: 'easeInOut' }}
                   className="absolute top-full left-0 right-0 mt-2 z-20"
                 >
-                  <Command className="rounded-lg border shadow-lg">
+                  <Command className="rounded-lg border shadow-lg" shouldFilter={false} loop>
                     <CommandList>
                       <CommandEmpty>no results found</CommandEmpty>
                       <CommandGroup>
