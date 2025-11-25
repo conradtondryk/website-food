@@ -349,7 +349,7 @@ export default function Home() {
                 >
                   <Command className="rounded-lg border shadow-lg">
                     <CommandList>
-                      <CommandEmpty>no results found</CommandEmpty>
+                      {foodQuery.trim().length >= 2 && <CommandEmpty>no results found</CommandEmpty>}
                       <CommandGroup>
                         {suggestions.map((suggestion, index) => (
                           <CommandItem
