@@ -2,14 +2,20 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SearchIcon } from 'lucide-react';
 import FoodCard from './components/FoodCard';
 import FoodCardSkeleton from './components/FoodCardSkeleton';
 import AddFoodCard from './components/AddFoodCard';
 import WinnerCard from './components/WinnerCard';
 import CategoryChart from './components/CategoryChart';
 import InfoHoverCard from './components/InfoHoverCard';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/app/components/ui/input-group';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/app/components/ui/command';
 import { FoodItem, Winner } from './types';
 
 export default function Home() {
@@ -23,32 +29,30 @@ export default function Home() {
   const [basePortionSize, setBasePortionSize] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'chart'>('cards');
   const [suggestions, setSuggestions] = useState<Array<{ displayName: string; originalName: string }>>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
+  const [showCommandList, setShowCommandList] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Close suggestions when clicking outside
+  // Close command list when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
+        setShowCommandList(false);
       }
     };
 
-    if (showSuggestions) {
+    if (showCommandList) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showSuggestions]);
+  }, [showCommandList]);
 
   useEffect(() => {
     if (foodQuery.trim().length < 2) {
       setSuggestions([]);
-      setShowSuggestions(false);
       return;
     }
 
@@ -63,15 +67,12 @@ export default function Home() {
         if (response.ok) {
           const data = await response.json();
           setSuggestions(data.suggestions || []);
-          setShowSuggestions(true);
         } else {
           setSuggestions([]);
-          setShowSuggestions(true); // Still show dropdown to display "no results"
         }
       } catch (error) {
         console.error('Error fetching suggestions:', error);
         setSuggestions([]);
-        setShowSuggestions(true); // Still show dropdown to display "no results"
       }
     };
 
@@ -93,11 +94,6 @@ export default function Home() {
       setShowSlowLoadingMessage(false);
     }
   }, [loadingCards, foodItems.length]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFoodQuery(e.target.value);
-    setError(null);
-  };
 
   const fetchFoodData = async (foodName: string): Promise<FoodItem> => {
     const response = await fetch('/api/food', {
@@ -158,7 +154,6 @@ export default function Home() {
   };
 
   const handleSuggestionClick = async (suggestion: { displayName: string; originalName: string }) => {
-    setShowSuggestions(false);
     setSuggestions([]);
     setFoodQuery('');
     setLoading(true);
@@ -257,7 +252,6 @@ export default function Home() {
 
         setFoodQuery('');
         setSuggestions([]);
-        setShowSuggestions(false);
         if (winner) {
           setWinner(null);
         }
@@ -315,7 +309,6 @@ export default function Home() {
   };
 
   const handleFocusSearch = () => {
-    searchInputRef.current?.focus();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -336,43 +329,46 @@ export default function Home() {
             </div>
           )}
           <div ref={searchContainerRef} className="max-w-md mx-auto relative">
-            <InputGroup>
-              <InputGroupAddon>
-                <SearchIcon className="text-zinc-400" />
-              </InputGroupAddon>
-              <InputGroupInput
-                ref={searchInputRef}
-                type="text"
-                value={foodQuery}
-                onChange={handleInputChange}
-                onKeyPress={handleKeyPress}
+            <Command className="rounded-lg border shadow-md">
+              <CommandInput
                 placeholder="enter food item..."
-                autoFocus
+                value={foodQuery}
+                onValueChange={setFoodQuery}
                 disabled={loading}
-                className="rounded-full"
+                onFocus={() => setShowCommandList(true)}
               />
-            </InputGroup>
-
-            {/* Suggestions dropdown */}
-            {showSuggestions && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-800 border-2 border-zinc-300 dark:border-zinc-600 rounded-2xl shadow-lg overflow-hidden z-20">
-                {suggestions.length > 0 ? (
-                  suggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      className="w-full px-4 py-3 text-left text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-b border-zinc-200 dark:border-zinc-700 last:border-b-0 cursor-pointer"
-                    >
-                      {suggestion.displayName}
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-4 py-3 text-center text-zinc-500 dark:text-zinc-400">
-                    no results found
-                  </div>
-                )}
-              </div>
-            )}
+            </Command>
+            <AnimatePresence>
+              {showCommandList && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.1, ease: 'easeInOut' }}
+                  className="absolute top-full left-0 right-0 mt-2 z-20"
+                >
+                  <Command className="rounded-lg border shadow-lg">
+                    <CommandList>
+                      <CommandEmpty>no results found</CommandEmpty>
+                      <CommandGroup>
+                        {suggestions.map((suggestion, index) => (
+                          <CommandItem
+                            key={index}
+                            value={suggestion.displayName}
+                            onSelect={() => {
+                              handleSuggestionClick(suggestion);
+                              setShowCommandList(false);
+                            }}
+                          >
+                            {suggestion.displayName}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </header>
