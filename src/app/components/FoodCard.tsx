@@ -69,8 +69,8 @@ export default function FoodCard({ food, onPriceChange, onRemove }: FoodCardProp
       )}
 
       <CardHeader>
-        <div className="h-5 sm:h-7 mb-0.5 sm:mb-1 flex items-center justify-center w-full">
-          <h2 className="text-sm sm:text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100 truncate w-full px-1">
+        <div className="min-h-5 sm:min-h-7 mb-0.5 sm:mb-1 flex items-center justify-center w-full">
+          <h2 className="text-sm sm:text-lg font-semibold text-center text-zinc-900 dark:text-zinc-100 w-full px-1 break-words">
             {food.name}
           </h2>
         </div>
