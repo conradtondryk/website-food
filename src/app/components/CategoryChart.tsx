@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { FoodItem } from '../types';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
@@ -219,15 +219,25 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
                 contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '10px' }}
                 labelStyle={{ color: '#f3f4f6' }}
                 itemStyle={{ color: '#f3f4f6' }}
+                formatter={(value: any, name: string) => {
+                  const foodIndex = parseInt(name.replace('food', ''));
+                  const foodName = foods[foodIndex]?.name || name;
+                  return [value, foodName];
+                }}
               />
               {foods.map((food, index) => (
                 <Bar
                   key={`food${index}`}
                   dataKey={`food${index}`}
+                  name={food.name}
                   fill={foodColors[index % foodColors.length]}
                   radius={[4, 4, 0, 0]}
                 />
               ))}
+              <Legend
+                wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
+                iconType="square"
+              />
             </BarChart>
           </ResponsiveContainer>
         ) : (
