@@ -335,8 +335,8 @@ export default function Home() {
           <Popover open={showCommandList && foodQuery.trim().length >= 2} onOpenChange={setShowCommandList}>
             <div ref={searchContainerRef} className="max-w-md mx-auto relative">
               <PopoverTrigger asChild>
-                <div className="relative">
-                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <div className="relative group">
+                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground transition-transform group-hover:scale-110 duration-200 pointer-events-none z-10" />
                   <Input
                     ref={searchInputRef}
                     type="text"
@@ -351,7 +351,7 @@ export default function Home() {
                       }
                     }}
                     disabled={loading}
-                    className="pl-9 pr-4"
+                    className="pl-9 pr-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-500 transition-all"
                   />
                 </div>
               </PopoverTrigger>
