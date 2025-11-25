@@ -173,7 +173,7 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-zinc-800 rounded-2xl shadow-md border border-zinc-200 dark:border-zinc-700 p-3 sm:p-4">
+    <div className="w-[calc(100vw-2rem)] sm:w-full max-w-full mx-auto bg-white dark:bg-zinc-800 rounded-2xl shadow-md border border-zinc-200 dark:border-zinc-700 p-3 sm:p-4 overflow-hidden">
       <div className="mb-3">
         <h3 className="text-sm sm:text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
           Compare by Category
@@ -195,25 +195,28 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
         </div>
       </div>
 
-      <div className="h-[300px]">
+      <div className="h-[250px] sm:h-[300px] -mx-3 px-1 sm:mx-0 sm:px-0">
         {selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              margin={{ top: 5, right: 10, left: 10, bottom: 20 }}
+              margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-zinc-700" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="name"
-                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                tick={{ fill: '#9ca3af', fontSize: 7 }}
                 interval={0}
+                angle={-25}
+                textAnchor="end"
+                height={35}
               />
               <YAxis
-                tick={{ fill: '#9ca3af', fontSize: 10 }}
-                width={35}
+                tick={{ fill: '#9ca3af', fontSize: 7 }}
+                width={25}
               />
               <Tooltip
-                contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '12px' }}
+                contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '10px' }}
                 labelStyle={{ color: '#f3f4f6' }}
                 itemStyle={{ color: '#f3f4f6' }}
               />
@@ -231,23 +234,23 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              margin={{ top: 5, right: 10, left: 10, bottom: 60 }}
+              margin={{ top: 5, right: 5, left: 0, bottom: 40 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-zinc-700" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="name"
-                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                tick={{ fill: '#9ca3af', fontSize: 7 }}
                 interval={0}
                 angle={-45}
                 textAnchor="end"
-                height={60}
+                height={40}
               />
               <YAxis
-                tick={{ fill: '#9ca3af', fontSize: 10 }}
-                width={35}
+                tick={{ fill: '#9ca3af', fontSize: 7 }}
+                width={25}
               />
               <Tooltip
-                contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '12px' }}
+                contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '10px' }}
                 labelStyle={{ color: '#f3f4f6' }}
                 itemStyle={{ color: '#f3f4f6' }}
               />
