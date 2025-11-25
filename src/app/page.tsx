@@ -339,7 +339,7 @@ export default function Home() {
               />
             </Command>
             <AnimatePresence>
-              {showCommandList && (
+              {showCommandList && foodQuery.trim().length >= 2 && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -349,7 +349,7 @@ export default function Home() {
                 >
                   <Command className="rounded-lg border shadow-lg">
                     <CommandList>
-                      {foodQuery.trim().length >= 2 && <CommandEmpty>no results found</CommandEmpty>}
+                      <CommandEmpty>no results found</CommandEmpty>
                       <CommandGroup>
                         {suggestions.map((suggestion, index) => (
                           <CommandItem
