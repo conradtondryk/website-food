@@ -2,7 +2,15 @@
 
 import { useState } from 'react';
 import { FoodItem } from '../types';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  ChartConfig,
+} from '@/app/components/ui/chart';
 
 interface CategoryChartProps {
   foods: FoodItem[];
@@ -76,57 +84,75 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
 
   if (foods.length < 2) return null;
 
+  // Generate chart config for shadcn
+  const generateChartConfig = (): ChartConfig => {
+    if (selectedCategory.key === 'all' || selectedCategory.key === 'ratios') {
+      // For grouped bar charts, create config for each food
+      const config: ChartConfig = {};
+      foods.forEach((food, index) => {
+        // Create a safe key by replacing spaces and special characters
+        const safeKey = `food${index}`;
+        config[safeKey] = {
+          label: food.name,
+          color: foodColors[index % foodColors.length],
+        };
+      });
+      return config;
+    } else {
+      // For single category view
+      return {
+        value: {
+          label: selectedCategory.label,
+          color: selectedCategory.color,
+        },
+      };
+    }
+  };
+
   // Generate data for "All" view
-  // Structure: One entry per macronutrient, with values for each food
-  // X-axis will show macronutrient names (Calories, Protein, Fat, etc.)
-  // Each macronutrient will have grouped bars (one per food)
   const getAllViewData = () => {
     return macroCategories.map((category) => {
       const entry: any = {
         name: category.shortLabel || category.label,
-        fullLabel: category.label, // Keep full label for tooltip
+        fullLabel: category.label,
         unit: category.unit,
       };
-      
+
       foods.forEach((food, index) => {
         const value = category.getValue
           ? category.getValue(food)
           : food.macros[category.key as keyof FoodItem['macros']];
-        entry[food.name] = value;
+        entry[`food${index}`] = value;
       });
-      
+
       return entry;
     });
   };
 
   // Generate data for "Ratios" view
-  // Structure: One entry per ratio type (protein/kcal, fat/kcal, carbs/kcal)
-  // X-axis will show ratio names
-  // Each ratio will have grouped bars (one per food)
   const getRatiosViewData = () => {
     return ratioCategories.map((category) => {
       const entry: any = {
         name: category.shortLabel || category.label,
-        fullLabel: category.label, // Keep full label for tooltip
+        fullLabel: category.label,
         unit: category.unit,
       };
-      
+
       foods.forEach((food, index) => {
         const macroValue = category.getValue
           ? category.getValue(food)
           : food.macros[category.key as keyof FoodItem['macros']];
-        // Calculate ratio: macro per calorie, handling division by zero
-        const ratio = food.macros.calories > 0 
-          ? macroValue / food.macros.calories 
+        const ratio = food.macros.calories > 0
+          ? macroValue / food.macros.calories
           : 0;
-        entry[food.name] = ratio;
+        entry[`food${index}`] = Number(ratio.toFixed(4));
       });
-      
+
       return entry;
     });
   };
 
-  const chartData = selectedCategory.key === 'all' 
+  const chartData = selectedCategory.key === 'all'
     ? getAllViewData()
     : selectedCategory.key === 'ratios'
     ? getRatiosViewData()
@@ -136,6 +162,15 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
           ? selectedCategory.getValue(food)
           : food.macros[selectedCategory.key as keyof FoodItem['macros']],
       }));
+
+  const chartConfig = generateChartConfig();
+
+  // Debug logging
+  if (selectedCategory.key === 'all' || selectedCategory.key === 'ratios') {
+    console.log('Chart Data:', JSON.stringify(chartData, null, 2));
+    console.log('Chart Config:', JSON.stringify(chartConfig, null, 2));
+    console.log('First data item keys:', chartData[0] ? Object.keys(chartData[0]) : 'none');
+  }
 
   return (
     <div className="w-full max-w-2xl mx-auto bg-white dark:bg-zinc-800 rounded-2xl shadow-md border border-zinc-200 dark:border-zinc-700 p-3 sm:p-4">
@@ -160,93 +195,70 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
         </div>
       </div>
 
-      <div className="[&_*]:outline-none [&_*]:focus:outline-none">
-        <ResponsiveContainer width="100%" height={selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? 300 : 200}>
-        <BarChart 
-          data={chartData} 
-          style={{ cursor: 'default' }}
-          margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
-          <XAxis
-            dataKey="name"
-            tick={{ fill: '#9ca3af', fontSize: 10 }}
-            interval={0} // Force all ticks to show
-            angle={selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? 0 : -45}
-            textAnchor={selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? 'middle' : 'end'}
-            height={selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? 40 : 60}
-          />
-          <YAxis
-            tick={{ fill: '#9ca3af', fontSize: 10 }}
-            width={35}
-          />
-          <Tooltip
-            contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '12px' }}
-            labelStyle={{ color: '#f3f4f6' }}
-            itemStyle={{ color: '#f3f4f6' }}
-            formatter={(value: any, name: string, props: any) => {
-              if (selectedCategory.key === 'all' || selectedCategory.key === 'ratios') {
-                const payload = props?.payload;
-                const unit = payload?.unit || '';
-                // Format ratio values to show more decimal places
-                const formattedValue = selectedCategory.key === 'ratios' 
-                  ? Number(value).toFixed(4)
-                  : value;
-                return [`${formattedValue}${unit}`, name];
-              }
-              return [`${value}${selectedCategory.unit}`, selectedCategory.label];
-            }}
-            labelFormatter={(label, payload) => {
-               // If we have fullLabel in payload, use it
-               if (payload && payload.length > 0 && payload[0].payload.fullLabel) {
-                   return payload[0].payload.fullLabel;
-               }
-               return label;
-            }}
-            cursor={false}
-          />
-          {selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? (
-            <>
+      <div className="h-[300px]">
+        {selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 5, right: 10, left: 10, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-zinc-700" />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                interval={0}
+              />
+              <YAxis
+                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                width={35}
+              />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '12px' }}
+                labelStyle={{ color: '#f3f4f6' }}
+                itemStyle={{ color: '#f3f4f6' }}
+              />
               {foods.map((food, index) => (
                 <Bar
-                  key={food.name}
-                  dataKey={food.name}
+                  key={`food${index}`}
+                  dataKey={`food${index}`}
                   fill={foodColors[index % foodColors.length]}
                   radius={[4, 4, 0, 0]}
-                  isAnimationActive={false}
-                  activeBar={false}
                 />
               ))}
-              <Legend
-                wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
-                iconType="square"
-                content={() => (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', paddingTop: '10px' }}>
-                    {foods.map((food, index) => (
-                      <div key={food.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px' }}>
-                        <div style={{
-                          width: '10px',
-                          height: '10px',
-                          backgroundColor: foodColors[index % foodColors.length],
-                        }} />
-                        <span>{food.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 5, right: 10, left: 10, bottom: 60 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-zinc-700" />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                interval={0}
+                angle={-45}
+                textAnchor="end"
+                height={60}
               />
-            </>
-          ) : (
-            <Bar
-              dataKey="value"
-              fill={selectedCategory.color}
-              radius={[4, 4, 0, 0]}
-              isAnimationActive={false}
-              activeBar={false}
-            />
-          )}
-        </BarChart>
-        </ResponsiveContainer>
+              <YAxis
+                tick={{ fill: '#9ca3af', fontSize: 10 }}
+                width={35}
+              />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '12px' }}
+                labelStyle={{ color: '#f3f4f6' }}
+                itemStyle={{ color: '#f3f4f6' }}
+              />
+              <Bar
+                dataKey="value"
+                fill={selectedCategory.color}
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
