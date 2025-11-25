@@ -8,14 +8,13 @@ import AddFoodCard from './components/AddFoodCard';
 import WinnerCard from './components/WinnerCard';
 import CategoryChart from './components/CategoryChart';
 import InfoHoverCard from './components/InfoHoverCard';
+import { SearchIcon } from 'lucide-react';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/app/components/ui/command';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/app/components/ui/popover';
+import { Input } from '@/app/components/ui/input';
 import { FoodItem, Winner } from './types';
 
 export default function Home() {
@@ -32,6 +31,7 @@ export default function Home() {
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
   const [showCommandList, setShowCommandList] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Close command list when clicking outside
   useEffect(() => {
@@ -310,6 +310,10 @@ export default function Home() {
 
   const handleFocusSearch = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+      setShowCommandList(true);
+    }, 300);
   };
 
   return (
@@ -328,48 +332,74 @@ export default function Home() {
               <p className="text-sm text-blue-700 dark:text-blue-300">{error}</p>
             </div>
           )}
-          <div ref={searchContainerRef} className="max-w-md mx-auto relative">
-            <Command className="rounded-lg border shadow-md" shouldFilter={false}>
-              <CommandInput
-                placeholder="enter food item..."
-                value={foodQuery}
-                onValueChange={setFoodQuery}
-                disabled={loading}
-                onFocus={() => setShowCommandList(true)}
-              />
-            </Command>
-            <AnimatePresence>
-              {showCommandList && foodQuery.trim().length >= 2 && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.1, ease: 'easeInOut' }}
-                  className="absolute top-full left-0 right-0 mt-2 z-20"
-                >
-                  <Command className="rounded-lg border shadow-lg" shouldFilter={false} loop>
-                    <CommandList>
-                      <CommandEmpty>no results found</CommandEmpty>
-                      <CommandGroup>
+          <Popover open={showCommandList && foodQuery.trim().length >= 2} onOpenChange={setShowCommandList}>
+            <div ref={searchContainerRef} className="max-w-md mx-auto relative">
+              <PopoverTrigger asChild>
+                <div className="relative">
+                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="enter food item..."
+                    value={foodQuery}
+                    onChange={(e) => setFoodQuery(e.target.value)}
+                    onFocus={() => setShowCommandList(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && suggestions.length > 0) {
+                        handleSuggestionClick(suggestions[0]);
+                        setShowCommandList(false);
+                      }
+                    }}
+                    disabled={loading}
+                    className="pl-9 pr-4"
+                  />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-[var(--radix-popover-trigger-width)] p-0"
+                align="start"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onInteractOutside={(e) => {
+                  if (searchContainerRef.current?.contains(e.target as Node)) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <AnimatePresence>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.1 }}
+                    className="max-h-[300px] overflow-y-auto"
+                  >
+                    {suggestions.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                        no results found
+                      </div>
+                    ) : (
+                      <div className="p-1">
                         {suggestions.map((suggestion, index) => (
-                          <CommandItem
+                          <button
                             key={index}
-                            value={suggestion.displayName}
-                            onSelect={() => {
+                            onMouseDown={(e) => {
+                              e.preventDefault();
                               handleSuggestionClick(suggestion);
                               setShowCommandList(false);
                             }}
+                            className="relative flex w-full cursor-pointer items-center rounded-md px-3 py-2.5 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground transition-colors"
                           >
+                            <SearchIcon className="mr-2 h-4 w-4 opacity-50" />
                             {suggestion.displayName}
-                          </CommandItem>
+                          </button>
                         ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </PopoverContent>
+            </div>
+          </Popover>
         </div>
       </header>
 
