@@ -309,15 +309,16 @@ export default function Home() {
   };
 
   const handleFocusSearch = () => {
+    // Immediate focus for mobile keyboard
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+
+    // Then scroll
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => {
-      if (searchInputRef.current) {
-        searchInputRef.current.focus();
-        // Trigger keyboard on mobile devices
-        searchInputRef.current.click();
-      }
-      setShowCommandList(true);
-    }, 300);
+
+    // Show results if applicable
+    setShowCommandList(true);
   };
 
   return (
