@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { FoodItem } from '../types';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, Customized } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
@@ -122,6 +122,8 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
         const value = category.getValue
           ? category.getValue(food)
           : food.macros[category.key as keyof FoodItem['macros']];
+        // Store actual value for tooltip and display
+        entry[`food${index}_actual`] = value;
         entry[`food${index}`] = value;
       });
 
@@ -145,10 +147,28 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
         const ratio = food.macros.calories > 0
           ? macroValue / food.macros.calories
           : 0;
-        entry[`food${index}`] = Number(ratio.toFixed(4));
+        const roundedRatio = Number(ratio.toFixed(4));
+
+        // Store actual value for tooltip and display
+        entry[`food${index}_actual`] = roundedRatio;
+        entry[`food${index}`] = roundedRatio;
       });
 
       return entry;
+    });
+  };
+
+  // Generate data for individual category view
+  const getSingleCategoryViewData = () => {
+    return foods.map((food) => {
+      const actualValue = selectedCategory.getValue
+        ? selectedCategory.getValue(food)
+        : food.macros[selectedCategory.key as keyof FoodItem['macros']];
+
+      return {
+        name: food.name,
+        value: actualValue,
+      };
     });
   };
 
@@ -156,12 +176,7 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
     ? getAllViewData()
     : selectedCategory.key === 'ratios'
     ? getRatiosViewData()
-    : foods.map((food) => ({
-        name: food.name,
-        value: selectedCategory.getValue
-          ? selectedCategory.getValue(food)
-          : food.macros[selectedCategory.key as keyof FoodItem['macros']],
-      }));
+    : getSingleCategoryViewData();
 
   const chartConfig = generateChartConfig();
 
@@ -219,10 +234,12 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
                 contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '10px' }}
                 labelStyle={{ color: '#f3f4f6' }}
                 itemStyle={{ color: '#f3f4f6' }}
-                formatter={(value: any, name: string) => {
-                  const foodIndex = parseInt(name.replace('food', ''));
-                  const foodName = foods[foodIndex]?.name || name;
-                  return [value, foodName];
+                formatter={(_value: any, name: string, props: any) => {
+                  // The dataKey contains the food index (e.g., "food0", "food1")
+                  const dataKey = props.dataKey;
+                  const actualValue = props.payload[`${dataKey}_actual`];
+
+                  return [actualValue, name];
                 }}
               />
               {foods.map((food, index) => (
@@ -234,6 +251,38 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
                   radius={[4, 4, 0, 0]}
                 />
               ))}
+              <Customized
+                component={(props: any) => {
+                  const { xAxisMap, yAxisMap, formattedGraphicalItems } = props;
+                  if (!formattedGraphicalItems || !formattedGraphicalItems[0]) return null;
+
+                  const labels: any[] = [];
+                  chartData.forEach((entry: any, entryIndex: number) => {
+                    foods.forEach((food, foodIndex) => {
+                      const actualValue = entry[`food${foodIndex}_actual`];
+                      if (actualValue === 0) {
+                        const barItem = formattedGraphicalItems.find((item: any) => item.props.dataKey === `food${foodIndex}`);
+                        if (barItem && barItem.props.data[entryIndex]) {
+                          const barData = barItem.props.data[entryIndex];
+                          labels.push(
+                            <text
+                              key={`label-${entryIndex}-${foodIndex}`}
+                              x={barData.x + barData.width / 2}
+                              y={barData.y - 5}
+                              fill="#9ca3af"
+                              textAnchor="middle"
+                              fontSize={8}
+                            >
+                              negligible
+                            </text>
+                          );
+                        }
+                      }
+                    });
+                  });
+                  return <g>{labels}</g>;
+                }}
+              />
               <Legend
                 wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
                 iconType="square"
@@ -268,6 +317,34 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
                 dataKey="value"
                 fill={selectedCategory.color}
                 radius={[4, 4, 0, 0]}
+              />
+              <Customized
+                component={(props: any) => {
+                  const { formattedGraphicalItems } = props;
+                  if (!formattedGraphicalItems || !formattedGraphicalItems[0]) return null;
+
+                  const labels: any[] = [];
+                  const barItem = formattedGraphicalItems[0];
+                  if (barItem && barItem.props.data) {
+                    barItem.props.data.forEach((barData: any, index: number) => {
+                      if (barData.value === 0) {
+                        labels.push(
+                          <text
+                            key={`label-${index}`}
+                            x={barData.x + barData.width / 2}
+                            y={barData.y - 5}
+                            fill="#9ca3af"
+                            textAnchor="middle"
+                            fontSize={9}
+                          >
+                            negligible
+                          </text>
+                        );
+                      }
+                    });
+                  }
+                  return <g>{labels}</g>;
+                }}
               />
             </BarChart>
           </ResponsiveContainer>
