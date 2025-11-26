@@ -397,7 +397,7 @@ export default function Home() {
                               handleSuggestionClick(suggestion);
                               setShowCommandList(false);
                             }}
-                            className="relative flex w-full cursor-pointer items-center rounded-md px-3 py-2.5 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground transition-colors"
+                            className="relative flex w-full cursor-pointer items-center rounded-md px-3 py-2.5 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground transition-colors active:scale-95 hover:scale-[1.01] transition-transform duration-200"
                           >
                             {suggestion.displayName}
                           </button>
