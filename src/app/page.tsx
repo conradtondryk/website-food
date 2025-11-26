@@ -66,7 +66,13 @@ export default function Home() {
 
         if (response.ok) {
           const data = await response.json();
-          setSuggestions(data.suggestions || []);
+          // Filter out foods that are already added
+          const existingFoodNames = foodItems.map(item => item.name.toLowerCase());
+          const filtered = (data.suggestions || []).filter(
+            (suggestion: { displayName: string; originalName: string }) =>
+              !existingFoodNames.includes(suggestion.displayName.toLowerCase())
+          );
+          setSuggestions(filtered);
         } else {
           setSuggestions([]);
         }
@@ -77,7 +83,7 @@ export default function Home() {
     };
 
     fetchSuggestions();
-  }, [foodQuery]);
+  }, [foodQuery, foodItems]);
 
   // Show slow loading message after 1.5 seconds for cold start
   useEffect(() => {
