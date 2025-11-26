@@ -389,6 +389,11 @@ export default function Home() {
                             key={index}
                             onMouseDown={(e) => {
                               e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               handleSuggestionClick(suggestion);
                               setShowCommandList(false);
                             }}
