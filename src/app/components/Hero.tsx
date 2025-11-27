@@ -30,13 +30,7 @@ function MiniCard({ name, calories, protein, highlighted }: { name: string; calo
 
 export default function Hero({ onScrollToApp }: HeroProps) {
   return (
-    <section className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-between px-6 pt-12 bg-zinc-50 dark:bg-zinc-950"
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)' }}
-    >
-      {/* Spacer for top */}
-      <div className="flex-1" />
-
-      {/* Main content - centered */}
+    <section className="h-full flex flex-col items-center justify-center px-6 relative bg-zinc-50 dark:bg-zinc-950">
       <div className="max-w-md mx-auto text-center">
         {/* Title */}
         <motion.h1
@@ -77,30 +71,28 @@ export default function Hero({ onScrollToApp }: HeroProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="text-xs text-zinc-400 dark:text-zinc-500"
+          className="text-xs text-zinc-400 dark:text-zinc-500 mb-6"
         >
           add foods to compare their macros
         </motion.p>
       </div>
 
-      {/* Spacer + scroll indicator at bottom */}
-      <div className="flex-1 flex flex-col justify-end">
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          onClick={onScrollToApp}
-          className="flex flex-col items-center gap-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+      {/* Scroll indicator - positioned 12% from bottom to clear Safari URL bar */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+        onClick={onScrollToApp}
+        className="absolute left-1/2 -translate-x-1/2 bottom-[12%] flex flex-col items-center gap-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+      >
+        <span className="text-xs">start comparing</span>
+        <motion.div
+          animate={{ y: [0, 4, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
         >
-          <span className="text-xs">start comparing</span>
-          <motion.div
-            animate={{ y: [0, 4, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <ChevronDown className="w-5 h-5" />
-          </motion.div>
-        </motion.button>
-      </div>
+          <ChevronDown className="w-5 h-5" />
+        </motion.div>
+      </motion.button>
     </section>
   );
 }

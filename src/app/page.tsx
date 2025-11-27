@@ -78,7 +78,7 @@ export default function Home() {
   return (
     <div className="h-screen h-[100dvh] overflow-y-auto snap-y snap-mandatory">
       {/* Hero Section */}
-      <div className="snap-start">
+      <div className="snap-start h-[100dvh] min-h-screen">
         <Hero onScrollToApp={scrollToApp} />
       </div>
 
