@@ -215,7 +215,7 @@ export default function FoodDrawer({ open, onOpenChange, onSelectFood, existingF
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-4 pb-8">
+            <div className="flex-1 overflow-y-auto px-4 pb-12">
               {searchQuery.trim().length >= 2 ? (
                 /* Search Results */
                 <div>

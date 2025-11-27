@@ -76,7 +76,7 @@ export default function Home() {
   const existingFoodNames = foodItems.map(item => item.name.toLowerCase());
 
   return (
-    <div className="h-screen overflow-y-auto snap-y snap-mandatory">
+    <div className="h-screen h-[100dvh] overflow-y-auto snap-y snap-mandatory">
       {/* Hero Section */}
       <div className="snap-start">
         <Hero onScrollToApp={scrollToApp} />
@@ -85,7 +85,7 @@ export default function Home() {
       {/* App Section */}
       <section
         ref={appSectionRef}
-        className="snap-start min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col"
+        className="snap-start min-h-screen min-h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex flex-col"
       >
         {/* View toggle - only show when foods exist */}
         {(foodItems.length > 0 || loadingCards > 0) && (
@@ -135,7 +135,7 @@ export default function Home() {
         )}
 
         {/* Main content area */}
-        <div className="flex-1 flex flex-col px-3 sm:px-6 py-3 sm:py-5">
+        <div className="flex-1 flex flex-col px-4 sm:px-6 py-4 sm:py-5">
           {viewMode === 'cards' ? (
             <div className={`flex-1 flex ${foodItems.length === 0 && loadingCards === 0 ? 'items-center justify-center' : 'items-start'}`}>
               {foodItems.length === 0 && loadingCards === 0 ? (
@@ -148,7 +148,7 @@ export default function Home() {
                 </div>
               ) : (
                 /* Food cards */
-                <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory w-full">
+                <div className={`flex gap-3 sm:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory w-full ${foodItems.length + loadingCards <= 1 ? 'justify-center' : ''}`}>
                   <AnimatePresence mode="popLayout" initial={false}>
                     {foodItems.map((food, index) => (
                       <motion.div

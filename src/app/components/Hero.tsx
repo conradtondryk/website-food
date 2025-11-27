@@ -30,7 +30,7 @@ function MiniCard({ name, calories, protein, highlighted }: { name: string; calo
 
 export default function Hero({ onScrollToApp }: HeroProps) {
   return (
-    <section className="h-screen flex flex-col items-center justify-center px-6 relative bg-zinc-50 dark:bg-zinc-950">
+    <section className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-6 py-12 pb-24 relative bg-zinc-50 dark:bg-zinc-950">
       <div className="max-w-md mx-auto text-center">
         {/* Title */}
         <motion.h1
@@ -83,7 +83,8 @@ export default function Hero({ onScrollToApp }: HeroProps) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.6 }}
         onClick={onScrollToApp}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+        className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+        style={{ bottom: 'max(2rem, env(safe-area-inset-bottom, 2rem))' }}
       >
         <span className="text-xs">start comparing</span>
         <motion.div
