@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -29,8 +30,26 @@ function MiniCard({ name, calories, protein, highlighted }: { name: string; calo
 }
 
 export default function Hero({ onScrollToApp }: HeroProps) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.5 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="h-full flex flex-col items-center justify-center px-6 relative bg-zinc-50 dark:bg-zinc-950">
+    <section ref={sectionRef} className="h-full flex flex-col items-center justify-center px-6 relative bg-zinc-50 dark:bg-zinc-950">
       <div className="max-w-md mx-auto text-center">
         {/* Title */}
         <motion.h1
@@ -77,13 +96,17 @@ export default function Hero({ onScrollToApp }: HeroProps) {
         </motion.p>
       </div>
 
-      {/* Scroll indicator - positioned 12% from bottom to clear Safari URL bar */}
+      {/* Scroll indicator - fixed to viewport bottom, hidden when scrolled */}
       <motion.button
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
+        animate={{ opacity: isVisible ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
         onClick={onScrollToApp}
-        className="absolute left-1/2 -translate-x-1/2 bottom-[12%] flex flex-col items-center gap-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+        className="fixed left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer z-10"
+        style={{
+          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)',
+          pointerEvents: isVisible ? 'auto' : 'none'
+        }}
       >
         <span className="text-xs">start comparing</span>
         <motion.div

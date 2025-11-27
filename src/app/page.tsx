@@ -76,16 +76,16 @@ export default function Home() {
   const existingFoodNames = foodItems.map(item => item.name.toLowerCase());
 
   return (
-    <div className="h-screen h-[100dvh] overflow-y-auto snap-y snap-mandatory">
+    <div className="h-screen h-[100dvh] overflow-y-auto snap-y snap-mandatory overscroll-none">
       {/* Hero Section */}
-      <div className="snap-start h-[100dvh] min-h-screen">
+      <div className="snap-start h-screen h-[100dvh]">
         <Hero onScrollToApp={scrollToApp} />
       </div>
 
       {/* App Section */}
       <section
         ref={appSectionRef}
-        className="snap-start min-h-screen min-h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex flex-col"
+        className="snap-start h-screen h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex flex-col overflow-hidden"
       >
         {/* View toggle - only show when foods exist */}
         {(foodItems.length > 0 || loadingCards > 0) && (
