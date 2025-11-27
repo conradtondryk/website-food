@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { CardLayout } from './CardLayout';
 
 interface AddFoodCardProps {
@@ -11,26 +12,10 @@ export default function AddFoodCard({ onClick }: AddFoodCardProps) {
       className="group w-full h-full focus:outline-none"
       aria-label="Add food to compare"
     >
-      <CardLayout
-        className="h-full items-center justify-center border-dashed border-2 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all cursor-pointer active:scale-95"
-      >
-        <div className="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="64"
-            height="64"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mb-2 sm:mb-4 w-12 h-12 sm:w-16 sm:h-16 group-hover:scale-110 transition-transform duration-200"
-          >
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          <span className="text-xs sm:text-base font-medium text-center px-2">Add Food to Compare</span>
+      <CardLayout className="h-full items-center justify-center border-dashed bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer active:scale-[0.98]">
+        <div className="flex flex-col items-center justify-center gap-2 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-400 dark:group-hover:text-zinc-500 transition-colors">
+          <Plus className="w-8 h-8 sm:w-10 sm:h-10" strokeWidth={1.5} />
+          <span className="text-[10px] sm:text-xs font-medium">add food</span>
         </div>
       </CardLayout>
     </button>

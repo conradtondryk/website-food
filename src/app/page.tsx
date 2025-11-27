@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import FoodCard from './components/FoodCard';
 import FoodCardSkeleton from './components/FoodCardSkeleton';
 import AddFoodCard from './components/AddFoodCard';
-import WinnerCard from './components/WinnerCard';
 import CategoryChart from './components/CategoryChart';
-import InfoHoverCard from './components/InfoHoverCard';
 import { SearchIcon } from 'lucide-react';
 import {
   Popover,
@@ -15,17 +14,13 @@ import {
   PopoverTrigger,
 } from '@/app/components/ui/popover';
 import { Input } from '@/app/components/ui/input';
-import { FoodItem, Winner } from './types';
+import { FoodItem } from './types';
 
 export default function Home() {
   const [foodQuery, setFoodQuery] = useState('');
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [winner, setWinner] = useState<Winner | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingCards, setLoadingCards] = useState<number>(0);
-  const [comparing, setComparing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [basePortionSize, setBasePortionSize] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'chart'>('cards');
   const [suggestions, setSuggestions] = useState<Array<{ displayName: string; originalName: string }>>([]);
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
@@ -101,80 +96,17 @@ export default function Home() {
     }
   }, [loadingCards, foodItems.length]);
 
-  const fetchFoodData = async (foodName: string): Promise<FoodItem> => {
-    const response = await fetch('/api/food', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ foodName }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch food data');
-    }
-
-    return response.json();
-  };
-
-  const fetchWinner = async (foods: FoodItem[]): Promise<void> => {
-    const response = await fetch('/api/compare', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ foods }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to compare foods');
-    }
-
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-    let currentWinner: Winner = { foodName: '', reason: '' };
-
-    if (!reader) {
-      throw new Error('No response body');
-    }
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value, { stream: true });
-      fullText += chunk;
-
-      const winnerMatch = fullText.match(/WINNER:\s*(.+?)(?:\n|$)/i);
-      const reasonMatch = fullText.match(/REASON:\s*([\s\S]+)/i);
-
-      if (winnerMatch) {
-        currentWinner.foodName = winnerMatch[1].trim();
-      }
-
-      if (reasonMatch) {
-        currentWinner.reason = reasonMatch[1].trim();
-      }
-
-      if (currentWinner.foodName) {
-        setWinner({ ...currentWinner });
-      }
-    }
-  };
-
   const handleSuggestionClick = async (suggestion: { displayName: string; originalName: string }) => {
     setSuggestions([]);
     setFoodQuery('');
     setLoading(true);
-    setError(null);
-
-    // Show skeleton immediately
     setLoadingCards(prev => prev + 1);
 
     try {
       const response = await fetch('/api/food', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          foodName: suggestion.originalName,
-        }),
+        body: JSON.stringify({ foodName: suggestion.originalName }),
       });
 
       const data = await response.json();
@@ -182,135 +114,32 @@ export default function Home() {
       if (!response.ok) {
         setLoadingCards(prev => prev - 1);
         if (data.error === 'invalid_food') {
-          setError('food not found. try a different search term.');
+          toast.error('food not found. try a different search term.');
         } else if (data.error === 'rate_limited') {
-          setError(data.message);
+          toast.error(data.message);
         } else {
-          setError('failed to fetch food data. please try again.');
+          toast.error('failed to fetch food data. please try again.');
         }
         return;
       }
 
-      if (foodItems.length === 0 && data.portionSize) {
-        setBasePortionSize(data.portionSize);
-      }
-
-      const newFoodItems = [...foodItems, data];
-      setFoodItems(newFoodItems);
+      setFoodItems(prev => [...prev, data]);
       setLoadingCards(prev => prev - 1);
-
-      if (winner) {
-        setWinner(null);
-      }
     } catch (error) {
       console.error('Error fetching food data:', error);
-      setError('failed to fetch food data. please try again.');
+      toast.error('failed to fetch food data. please try again.');
       setLoadingCards(prev => prev - 1);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyPress = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && foodQuery.trim() && !loading) {
-      // If there are suggestions, select the first one
-      if (suggestions.length > 0) {
-        handleSuggestionClick(suggestions[0]);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      // Show skeleton immediately
-      setLoadingCards(prev => prev + 1);
-
-      try {
-        const response = await fetch('/api/food', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            foodName: foodQuery,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setLoadingCards(prev => prev - 1);
-          if (data.error === 'invalid_food') {
-            setError('food not found. try a different search term.');
-          } else if (data.error === 'rate_limited') {
-            setError(data.message);
-          } else {
-            setError('failed to fetch food data. please try again.');
-          }
-          return;
-        }
-
-        if (foodItems.length === 0 && data.portionSize) {
-          setBasePortionSize(data.portionSize);
-        }
-
-        const newFoodItems = [...foodItems, data];
-        setFoodItems(newFoodItems);
-        setLoadingCards(prev => prev - 1);
-
-        setFoodQuery('');
-        setSuggestions([]);
-        if (winner) {
-          setWinner(null);
-        }
-      } catch (error) {
-        console.error('Error fetching food data:', error);
-        setError('failed to fetch food data. please try again.');
-        setLoadingCards(prev => prev - 1);
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
-  const handleCompare = async () => {
-    if (foodItems.length < 2 || comparing) return;
-
-    setComparing(true);
-    setWinner(null);
-    try {
-      await fetchWinner(foodItems);
-    } catch (error) {
-      console.error('Error comparing foods:', error);
-    } finally {
-      setComparing(false);
-    }
-  };
-
-  const handleReset = () => {
-    setFoodItems([]);
-    setWinner(null);
-    setFoodQuery('');
-    setBasePortionSize(null);
-  };
-
-  const handlePriceChange = (index: number, price: number | undefined) => {
-    const newFoodItems = [...foodItems];
-    newFoodItems[index] = { ...newFoodItems[index], price };
-    setFoodItems(newFoodItems);
-  };
-
   const handleRemoveFood = (index: number) => {
     const newFoodItems = foodItems.filter((_, i) => i !== index);
     setFoodItems(newFoodItems);
 
-    // Reset winner if we have less than 2 foods
     if (newFoodItems.length < 2) {
-      setWinner(null);
-      setViewMode('cards'); // Switch back to cards view
-    }
-
-    // Reset base portion size if we removed all foods
-    if (newFoodItems.length === 0) {
-      setBasePortionSize(null);
+      setViewMode('cards');
     }
   };
 
@@ -328,30 +157,24 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black">
-      <InfoHoverCard />
+    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-zinc-950">
       {/* Top search bar */}
-      <header className="sticky top-0 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-700 px-4 sm:px-8 py-4">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-sm text-zinc-700 dark:text-zinc-300 text-center mb-3">
+      <header className="sticky top-0 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-100 dark:border-zinc-800 px-4 py-3 sm:py-4">
+        <div className="max-w-2xl mx-auto">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center mb-2.5">
             {foodItems.length === 0
-              ? 'find your food macros. simply search for your food item to begin.'
-              : 'select another food to compare to.'}
-          </h1>
-          {error && (
-            <div className="max-w-md mx-auto mb-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-full">
-              <p className="text-sm text-blue-700 dark:text-blue-300">{error}</p>
-            </div>
-          )}
+              ? 'search for a food to view its macros'
+              : 'add another food to compare'}
+          </p>
           <Popover open={showCommandList && foodQuery.trim().length >= 2} onOpenChange={setShowCommandList}>
-            <div ref={searchContainerRef} className="max-w-md mx-auto relative">
+            <div ref={searchContainerRef} className="relative">
               <PopoverTrigger asChild>
-                <div className="relative group">
-                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground transition-transform group-hover:scale-110 duration-200 pointer-events-none z-10" />
+                <div className="relative">
+                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                   <Input
                     ref={searchInputRef}
                     type="text"
-                    placeholder="enter food item..."
+                    placeholder="search foods..."
                     value={foodQuery}
                     onChange={(e) => setFoodQuery(e.target.value)}
                     onFocus={() => setShowCommandList(true)}
@@ -362,12 +185,12 @@ export default function Home() {
                       }
                     }}
                     disabled={loading}
-                    className="pl-9 pr-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-500 transition-all"
+                    className="pl-9 h-10 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors"
                   />
                 </div>
               </PopoverTrigger>
               <PopoverContent
-                className="w-[var(--radix-popover-trigger-width)] p-0"
+                className="w-[var(--radix-popover-trigger-width)] p-0 border-zinc-200 dark:border-zinc-700"
                 align="start"
                 onOpenAutoFocus={(e) => e.preventDefault()}
                 onInteractOutside={(e) => {
@@ -378,18 +201,18 @@ export default function Home() {
               >
                 <AnimatePresence>
                   <motion.div
-                    initial={{ opacity: 0, y: -10 }}
+                    initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
+                    exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.1 }}
-                    className="max-h-[300px] overflow-y-auto"
+                    className="max-h-[280px] overflow-y-auto"
                   >
                     {suggestions.length === 0 ? (
-                      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                      <div className="px-3 py-6 text-center text-xs text-zinc-400">
                         no results found
                       </div>
                     ) : (
-                      <div className="p-1">
+                      <div className="py-1">
                         {suggestions.map((suggestion, index) => (
                           <button
                             key={index}
@@ -403,7 +226,7 @@ export default function Home() {
                               handleSuggestionClick(suggestion);
                               setShowCommandList(false);
                             }}
-                            className="relative flex w-full cursor-pointer items-center rounded-md px-3 py-2.5 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground transition-colors active:scale-95 hover:scale-[1.01] transition-transform duration-200"
+                            className="flex w-full items-center px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                           >
                             {suggestion.displayName}
                           </button>
@@ -419,36 +242,33 @@ export default function Home() {
       </header>
 
       {/* Main content area */}
-      <main className="flex-1 flex flex-col gap-4 sm:gap-6 px-4 sm:px-8 py-4 sm:py-6">
-        {/* View toggle - always visible when there are items or loading */}
+      <main className="flex-1 flex flex-col gap-3 sm:gap-5 px-3 sm:px-6 py-3 sm:py-5">
+        {/* View toggle */}
         {(foodItems.length > 0 || loadingCards > 0) && (
           <div className="flex justify-center">
-            <div className="inline-flex rounded-full border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-1 relative">
-              {/* Sliding background */}
+            <div className="inline-flex rounded-lg bg-zinc-100 dark:bg-zinc-800 p-0.5 relative">
               <motion.div
                 layoutId="activeTab"
-                className="absolute bg-blue-500 rounded-full"
+                className="absolute bg-white dark:bg-zinc-700 rounded-md shadow-sm"
                 style={{
-                  top: '4px',
-                  bottom: '4px',
-                  left: viewMode === 'cards' ? '4px' : 'auto',
-                  right: viewMode === 'chart' ? '4px' : 'auto',
-                  width: 'calc(50% - 4px)',
+                  top: '2px',
+                  bottom: '2px',
+                  left: viewMode === 'cards' ? '2px' : 'auto',
+                  right: viewMode === 'chart' ? '2px' : 'auto',
+                  width: 'calc(50% - 2px)',
                 }}
                 transition={{
                   type: 'spring',
-                  stiffness: 500,
+                  stiffness: 400,
                   damping: 30,
                 }}
               />
               <button
                 onClick={() => setViewMode('cards')}
-                className={`relative px-3 py-1.5 text-sm rounded-full transition-colors cursor-pointer ${
+                className={`relative px-4 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                   viewMode === 'cards'
-                    ? 'text-white'
-                    : 'text-zinc-700 dark:text-zinc-300'
-                } ${
-                  viewMode !== 'cards' ? 'before:content-[""] before:absolute before:inset-0.5 before:bg-zinc-100/50 dark:before:bg-zinc-700/50 before:rounded-full before:opacity-0 hover:before:opacity-100 before:transition-opacity before:-z-10' : ''
+                    ? 'text-zinc-900 dark:text-zinc-100'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
                 }`}
               >
                 Cards
@@ -456,14 +276,12 @@ export default function Home() {
               <button
                 onClick={() => foodItems.length >= 2 && setViewMode('chart')}
                 disabled={foodItems.length < 2}
-                className={`relative px-3 py-1.5 text-sm rounded-full transition-colors ${
+                className={`relative px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'chart'
-                    ? 'text-white'
+                    ? 'text-zinc-900 dark:text-zinc-100'
                     : foodItems.length < 2
-                    ? 'text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
-                    : 'text-zinc-700 dark:text-zinc-300 cursor-pointer'
-                } ${
-                  viewMode !== 'chart' && foodItems.length >= 2 ? 'before:content-[""] before:absolute before:inset-0.5 before:bg-zinc-100/50 dark:before:bg-zinc-700/50 before:rounded-full before:opacity-0 hover:before:opacity-100 before:transition-opacity before:-z-10' : ''
+                    ? 'text-zinc-300 dark:text-zinc-600 cursor-not-allowed'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-pointer'
                 }`}
               >
                 Chart
@@ -472,79 +290,62 @@ export default function Home() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-          {/* Food cards or chart - scrollable horizontally on mobile */}
-          <div className="flex-1 grid grid-flow-col auto-cols-max gap-3 sm:gap-6 overflow-x-auto pb-4 items-stretch">
-            {viewMode === 'cards' ? (
-              <>
-                <AnimatePresence mode="popLayout" initial={false}>
-                  {foodItems.map((food, index) => (
-                    <motion.div
-                      key={food.id}
-                      layout
-                      initial={{ opacity: 1, scale: 1 }}
-                      exit={{
-                        opacity: 0,
-                        scale: 0.9,
-                        transition: { duration: 0.15 }
-                      }}
-                      transition={{
-                        layout: { duration: 0.15, ease: "easeInOut" },
-                        opacity: { duration: 0.15 }
-                      }}
-                    >
-                      <FoodCard
-                        food={food}
-                        onPriceChange={(price) => handlePriceChange(index, price)}
-                        onRemove={() => handleRemoveFood(index)}
-                      />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                {/* Show skeleton cards while loading */}
-                {[...Array(loadingCards)].map((_, index) => (
-                  <div key={`skeleton-${index}`}>
-                    <FoodCardSkeleton />
-                  </div>
+        {/* Food cards or chart */}
+        <div className="flex-1">
+          {viewMode === 'cards' ? (
+            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
+              <AnimatePresence mode="popLayout" initial={false}>
+                {foodItems.map((food, index) => (
+                  <motion.div
+                    key={food.id}
+                    layout
+                    initial={{ opacity: 1, scale: 1 }}
+                    exit={{
+                      opacity: 0,
+                      scale: 0.95,
+                      transition: { duration: 0.15 }
+                    }}
+                    transition={{
+                      layout: { duration: 0.15, ease: "easeInOut" },
+                      opacity: { duration: 0.15 }
+                    }}
+                    className="snap-start"
+                  >
+                    <FoodCard
+                      food={food}
+                      onRemove={() => handleRemoveFood(index)}
+                    />
+                  </motion.div>
                 ))}
+              </AnimatePresence>
 
-                {/* Add Food Button */}
-                {foodItems.length > 0 && (
-                  <div>
-                    <AddFoodCard onClick={handleFocusSearch} />
+              {/* Skeleton cards while loading */}
+              {[...Array(loadingCards)].map((_, index) => (
+                <div key={`skeleton-${index}`} className="snap-start">
+                  <FoodCardSkeleton />
+                </div>
+              ))}
+
+              {/* Add Food Button */}
+              {foodItems.length > 0 && (
+                <div className="snap-start">
+                  <AddFoodCard onClick={handleFocusSearch} />
+                </div>
+              )}
+
+              {/* Slow loading message */}
+              {showSlowLoadingMessage && (
+                <div className="flex-shrink-0 flex items-center justify-center w-36 sm:w-72">
+                  <div className="text-center">
+                    <div className="text-xs text-zinc-400 animate-pulse">warming up...</div>
+                    <div className="text-[10px] text-zinc-300 mt-1">may take a few seconds</div>
                   </div>
-                )}
-
-                {/* Show slow loading message for cold start */}
-                {showSlowLoadingMessage && (
-                  <div className="flex-shrink-0 flex items-center justify-center w-40 sm:w-80">
-                    <div className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-                      <div className="animate-pulse">warming up database...</div>
-                      <div className="text-xs mt-2">this may take a few seconds</div>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="w-full">
-                <CategoryChart foods={foodItems} />
-              </div>
-            )}
-          </div>
-
-          {/* Winner section - bottom on mobile, right on desktop */}
-          {/* Temporarily hidden - keeping logic for later
-          {foodItems.length > 0 && (
-            <div className="flex-shrink-0 w-full lg:w-auto">
-              <WinnerCard
-                winner={winner}
-                onCompare={handleCompare}
-                comparing={comparing}
-                canCompare={foodItems.length >= 2}
-              />
+                </div>
+              )}
             </div>
+          ) : (
+            <CategoryChart foods={foodItems} />
           )}
-          */}
         </div>
       </main>
     </div>

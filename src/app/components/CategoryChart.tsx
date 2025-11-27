@@ -3,14 +3,6 @@
 import { useState } from 'react';
 import { FoodItem } from '../types';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, Customized } from 'recharts';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-  ChartConfig,
-} from '@/app/components/ui/chart';
 
 interface CategoryChartProps {
   foods: FoodItem[];
@@ -20,94 +12,51 @@ type Category = {
   key: keyof FoodItem['macros'] | 'totalFat' | 'all' | 'ratios';
   label: string;
   shortLabel?: string;
-  color: string;
   unit: string;
   getValue?: (food: FoodItem) => number;
 };
 
 const categories: Category[] = [
-  { key: 'all', label: 'All', color: '#000000', unit: '' },
-  { key: 'calories', label: 'Calories', color: '#f97316', unit: '' },
-  { key: 'protein', label: 'Protein', color: '#3b82f6', unit: 'g' },
-  {
-    key: 'totalFat',
-    label: 'Fat',
-    color: '#10b981',
-    unit: 'g',
-    getValue: (food) => food.macros.unsaturatedFat + food.macros.saturatedFat
-  },
-  { key: 'saturatedFat', label: 'of which Saturates', shortLabel: 'Saturates', color: '#ef4444', unit: 'g' },
-  { key: 'carbs', label: 'Carbs', color: '#f59e0b', unit: 'g' },
-  { key: 'sugars', label: 'of which Sugars', shortLabel: 'Sugars', color: '#ec4899', unit: 'g' },
-  { key: 'fibre', label: 'Fibre', color: '#8b5cf6', unit: 'g' },
-  { key: 'ratios', label: 'Ratios', color: '#06b6d4', unit: 'g/kcal' },
+  { key: 'all', label: 'all', unit: '' },
+  { key: 'calories', label: 'calories', unit: '' },
+  { key: 'protein', label: 'protein', unit: 'g' },
+  { key: 'totalFat', label: 'fat', unit: 'g', getValue: (food) => food.macros.unsaturatedFat + food.macros.saturatedFat },
+  { key: 'saturatedFat', label: 'saturates', shortLabel: 'sat', unit: 'g' },
+  { key: 'carbs', label: 'carbs', unit: 'g' },
+  { key: 'sugars', label: 'sugars', shortLabel: 'sug', unit: 'g' },
+  { key: 'fibre', label: 'fibre', unit: 'g' },
+  { key: 'ratios', label: 'ratios', unit: 'g/kcal' },
 ];
 
 const macroCategories: Category[] = [
-  { key: 'calories', label: 'Calories', color: '#f97316', unit: '' },
-  { key: 'protein', label: 'Protein', color: '#3b82f6', unit: 'g' },
-  {
-    key: 'totalFat',
-    label: 'Fat',
-    color: '#10b981',
-    unit: 'g',
-    getValue: (food) => food.macros.unsaturatedFat + food.macros.saturatedFat
-  },
-  { key: 'saturatedFat', label: 'of which Saturates', shortLabel: 'Saturates', color: '#ef4444', unit: 'g' },
-  { key: 'carbs', label: 'Carbs', color: '#f59e0b', unit: 'g' },
-  { key: 'sugars', label: 'of which Sugars', shortLabel: 'Sugars', color: '#ec4899', unit: 'g' },
-  { key: 'fibre', label: 'Fibre', color: '#8b5cf6', unit: 'g' },
+  { key: 'calories', label: 'cal', unit: '' },
+  { key: 'protein', label: 'protein', unit: 'g' },
+  { key: 'totalFat', label: 'fat', unit: 'g', getValue: (food) => food.macros.unsaturatedFat + food.macros.saturatedFat },
+  { key: 'saturatedFat', label: 'sat', shortLabel: 'sat', unit: 'g' },
+  { key: 'carbs', label: 'carbs', unit: 'g' },
+  { key: 'sugars', label: 'sugar', shortLabel: 'sug', unit: 'g' },
+  { key: 'fibre', label: 'fibre', unit: 'g' },
 ];
 
 const ratioCategories: Category[] = [
-  { key: 'protein', label: 'Protein per Calorie', shortLabel: 'Protein/kcal', color: '#3b82f6', unit: 'g/kcal' },
-  { key: 'totalFat', label: 'Fat per Calorie', shortLabel: 'Fat/kcal', color: '#10b981', unit: 'g/kcal', getValue: (food) => food.macros.unsaturatedFat + food.macros.saturatedFat },
-  { key: 'carbs', label: 'Carbs per Calorie', shortLabel: 'Carbs/kcal', color: '#f59e0b', unit: 'g/kcal' },
+  { key: 'protein', label: 'protein/kcal', shortLabel: 'prot', unit: 'g/kcal' },
+  { key: 'totalFat', label: 'fat/kcal', shortLabel: 'fat', unit: 'g/kcal', getValue: (food) => food.macros.unsaturatedFat + food.macros.saturatedFat },
+  { key: 'carbs', label: 'carbs/kcal', shortLabel: 'carb', unit: 'g/kcal' },
 ];
 
-// Generate colors for foods
 const foodColors = [
   '#3b82f6', // blue
-  '#10b981', // green
   '#f97316', // orange
-  '#ef4444', // red
-  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#8b5cf6', // violet
   '#ec4899', // pink
-  '#8b5cf6', // purple
   '#06b6d4', // cyan
-  '#84cc16', // lime
-  '#f43f5e', // rose
 ];
 
 export default function CategoryChart({ foods }: CategoryChartProps) {
   const [selectedCategory, setSelectedCategory] = useState<Category>(categories[0]);
 
   if (foods.length < 2) return null;
-
-  // Generate chart config for shadcn
-  const generateChartConfig = (): ChartConfig => {
-    if (selectedCategory.key === 'all' || selectedCategory.key === 'ratios') {
-      // For grouped bar charts, create config for each food
-      const config: ChartConfig = {};
-      foods.forEach((food, index) => {
-        // Create a safe key by replacing spaces and special characters
-        const safeKey = `food${index}`;
-        config[safeKey] = {
-          label: food.name,
-          color: foodColors[index % foodColors.length],
-        };
-      });
-      return config;
-    } else {
-      // For single category view
-      return {
-        value: {
-          label: selectedCategory.label,
-          color: selectedCategory.color,
-        },
-      };
-    }
-  };
 
   // Generate data for "All" view
   const getAllViewData = () => {
@@ -178,30 +127,18 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
     ? getRatiosViewData()
     : getSingleCategoryViewData();
 
-  const chartConfig = generateChartConfig();
-
-  // Debug logging
-  if (selectedCategory.key === 'all' || selectedCategory.key === 'ratios') {
-    console.log('Chart Data:', JSON.stringify(chartData, null, 2));
-    console.log('Chart Config:', JSON.stringify(chartConfig, null, 2));
-    console.log('First data item keys:', chartData[0] ? Object.keys(chartData[0]) : 'none');
-  }
-
   return (
-    <div className="w-[calc(100vw-2rem)] sm:w-full max-w-full mx-auto bg-white dark:bg-zinc-800 rounded-2xl shadow-md border border-zinc-200 dark:border-zinc-700 p-3 sm:p-4 overflow-hidden">
+    <div className="w-[calc(100vw-1.5rem)] sm:w-full max-w-full mx-auto bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 sm:p-4 overflow-hidden">
       <div className="mb-3">
-        <h3 className="text-sm sm:text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-          Compare by Category
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           {categories.map((category) => (
             <button
               key={category.key}
               onClick={() => setSelectedCategory(category)}
-              className={`px-2 py-1 text-xs rounded-full transition-colors cursor-pointer ${
+              className={`px-2 py-1 text-[10px] sm:text-xs rounded-md transition-colors cursor-pointer ${
                 selectedCategory.key === category.key
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600'
+                  ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
+                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
               }`}
             >
               {category.label}
@@ -210,35 +147,37 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
         </div>
       </div>
 
-      <div className="h-[250px] sm:h-[300px] -mx-3 px-1 sm:mx-0 sm:px-0">
+      <div className="h-[200px] sm:h-[280px]">
         {selectedCategory.key === 'all' || selectedCategory.key === 'ratios' ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+              margin={{ top: 5, right: 5, left: -10, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
               <XAxis
                 dataKey="name"
-                tick={{ fill: '#9ca3af', fontSize: 7 }}
+                tick={{ fill: '#a1a1aa', fontSize: 8 }}
                 interval={0}
-                angle={-25}
+                angle={-20}
                 textAnchor="end"
-                height={35}
+                height={30}
+                axisLine={{ stroke: '#e4e4e7' }}
+                tickLine={false}
               />
               <YAxis
-                tick={{ fill: '#9ca3af', fontSize: 7 }}
-                width={25}
+                tick={{ fill: '#a1a1aa', fontSize: 8 }}
+                width={30}
+                axisLine={false}
+                tickLine={false}
               />
               <Tooltip
-                contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '10px' }}
-                labelStyle={{ color: '#f3f4f6' }}
-                itemStyle={{ color: '#f3f4f6' }}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e4e4e7', borderRadius: '0.5rem', fontSize: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+                labelStyle={{ color: '#18181b', fontWeight: 500 }}
+                itemStyle={{ color: '#52525b' }}
                 formatter={(_value: any, name: string, props: any) => {
-                  // The dataKey contains the food index (e.g., "food0", "food1")
                   const dataKey = props.dataKey;
                   const actualValue = props.payload[`${dataKey}_actual`];
-
                   return [actualValue, name];
                 }}
               />
@@ -248,17 +187,17 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
                   dataKey={`food${index}`}
                   name={food.name}
                   fill={foodColors[index % foodColors.length]}
-                  radius={[4, 4, 0, 0]}
+                  radius={[3, 3, 0, 0]}
                 />
               ))}
               <Customized
                 component={(props: any) => {
-                  const { xAxisMap, yAxisMap, formattedGraphicalItems } = props;
+                  const { formattedGraphicalItems } = props;
                   if (!formattedGraphicalItems || !formattedGraphicalItems[0]) return null;
 
                   const labels: any[] = [];
                   chartData.forEach((entry: any, entryIndex: number) => {
-                    foods.forEach((food, foodIndex) => {
+                    foods.forEach((_, foodIndex) => {
                       const actualValue = entry[`food${foodIndex}_actual`];
                       if (actualValue === 0) {
                         const barItem = formattedGraphicalItems.find((item: any) => item.props.dataKey === `food${foodIndex}`);
@@ -268,12 +207,12 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
                             <text
                               key={`label-${entryIndex}-${foodIndex}`}
                               x={barData.x + barData.width / 2}
-                              y={barData.y - 5}
-                              fill="#9ca3af"
+                              y={barData.y - 3}
+                              fill="#d4d4d8"
                               textAnchor="middle"
-                              fontSize={8}
+                              fontSize={6}
                             >
-                              negligible
+                              0
                             </text>
                           );
                         }
@@ -284,8 +223,9 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
                 }}
               />
               <Legend
-                wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
-                iconType="square"
+                wrapperStyle={{ fontSize: '9px', paddingTop: '8px' }}
+                iconType="circle"
+                iconSize={6}
               />
             </BarChart>
           </ResponsiveContainer>
@@ -293,30 +233,34 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              margin={{ top: 5, right: 5, left: 0, bottom: 40 }}
+              margin={{ top: 5, right: 5, left: -10, bottom: 30 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
               <XAxis
                 dataKey="name"
-                tick={{ fill: '#9ca3af', fontSize: 7 }}
+                tick={{ fill: '#a1a1aa', fontSize: 8 }}
                 interval={0}
-                angle={-45}
+                angle={-35}
                 textAnchor="end"
-                height={40}
+                height={35}
+                axisLine={{ stroke: '#e4e4e7' }}
+                tickLine={false}
               />
               <YAxis
-                tick={{ fill: '#9ca3af', fontSize: 7 }}
-                width={25}
+                tick={{ fill: '#a1a1aa', fontSize: 8 }}
+                width={30}
+                axisLine={false}
+                tickLine={false}
               />
               <Tooltip
-                contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', fontSize: '10px' }}
-                labelStyle={{ color: '#f3f4f6' }}
-                itemStyle={{ color: '#f3f4f6' }}
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e4e4e7', borderRadius: '0.5rem', fontSize: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+                labelStyle={{ color: '#18181b', fontWeight: 500 }}
+                itemStyle={{ color: '#52525b' }}
               />
               <Bar
                 dataKey="value"
-                fill={selectedCategory.color}
-                radius={[4, 4, 0, 0]}
+                fill="#3b82f6"
+                radius={[3, 3, 0, 0]}
               />
               <Customized
                 component={(props: any) => {
@@ -332,12 +276,12 @@ export default function CategoryChart({ foods }: CategoryChartProps) {
                           <text
                             key={`label-${index}`}
                             x={barData.x + barData.width / 2}
-                            y={barData.y - 5}
-                            fill="#9ca3af"
+                            y={barData.y - 3}
+                            fill="#d4d4d8"
                             textAnchor="middle"
-                            fontSize={9}
+                            fontSize={7}
                           >
-                            negligible
+                            0
                           </text>
                         );
                       }
