@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Drawer } from 'vaul';
-import { Search, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft } from 'lucide-react';
 import { Input } from '@/app/components/ui/input';
+import type { FoodCategory } from '@/app/api/food/foods';
 
 interface FoodDrawerProps {
   open: boolean;
@@ -12,40 +13,76 @@ interface FoodDrawerProps {
   existingFoodNames: string[];
 }
 
-const categories = [
-  {
-    name: 'protein',
-    subcategories: ['beef', 'chicken', 'pork', 'fish', 'seafood', 'lamb', 'turkey'],
-  },
-  {
-    name: 'dairy & eggs',
-    subcategories: ['milk', 'cheese', 'yogurt', 'eggs', 'butter'],
-  },
-  {
-    name: 'fruits',
-    subcategories: ['apple', 'banana', 'orange', 'berries', 'tropical'],
-  },
-  {
-    name: 'vegetables',
-    subcategories: ['leafy greens', 'root vegetables', 'cruciferous', 'peppers'],
-  },
-  {
-    name: 'grains',
-    subcategories: ['rice', 'bread', 'pasta', 'oats', 'cereal'],
-  },
-  {
-    name: 'legumes & nuts',
-    subcategories: ['beans', 'lentils', 'nuts', 'seeds', 'tofu'],
-  },
+// Display names for categories
+const categoryLabels: Record<FoodCategory, string> = {
+  meat: 'meat',
+  seafood: 'seafood',
+  dairy: 'dairy',
+  eggs: 'eggs',
+  fruits: 'fruits',
+  vegetables: 'vegetables',
+  grains: 'grains',
+  legumes: 'legumes',
+  nuts: 'nuts & seeds',
+  beverages: 'beverages',
+  snacks: 'snacks',
+  condiments: 'condiments',
+};
+
+// Order for displaying categories
+const categoryOrder: FoodCategory[] = [
+  'meat',
+  'seafood',
+  'dairy',
+  'eggs',
+  'fruits',
+  'vegetables',
+  'grains',
+  'legumes',
+  'nuts',
+  'beverages',
+  'snacks',
+  'condiments',
 ];
 
 export default function FoodDrawer({ open, onOpenChange, onSelectFood, existingFoodNames }: FoodDrawerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Array<{ displayName: string; originalName: string }>>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<FoodCategory | null>(null);
+  const [categoryFoods, setCategoryFoods] = useState<Array<{ displayName: string; originalName: string }>>([]);
+  const [loadingCategory, setLoadingCategory] = useState(false);
+  const [availableCategories, setAvailableCategories] = useState<Record<string, number>>({});
+
+  // Fetch available categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/food/by-category');
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableCategories(data.categories || {});
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Reset state when drawer closes
+  useEffect(() => {
+    if (!open) {
+      setSearchQuery('');
+      setSuggestions([]);
+      setSelectedCategory(null);
+      setCategoryFoods([]);
+    }
+  }, [open]);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
+    setSelectedCategory(null); // Clear category when searching
 
     if (query.trim().length < 2) {
       setSuggestions([]);
@@ -78,16 +115,50 @@ export default function FoodDrawer({ open, onOpenChange, onSelectFood, existingF
     }
   };
 
-  const handleSelectFood = (suggestion: { displayName: string; originalName: string }) => {
-    onSelectFood(suggestion);
+  const handleCategoryClick = async (category: FoodCategory) => {
+    setSelectedCategory(category);
+    setSearchQuery(''); // Clear search when selecting category
+    setSuggestions([]);
+    setLoadingCategory(true);
+
+    try {
+      const response = await fetch(`/api/food/by-category?category=${category}`);
+      if (response.ok) {
+        const data = await response.json();
+        const filtered = (data.foods || []).filter(
+          (food: { displayName: string; originalName: string }) =>
+            !existingFoodNames.includes(food.displayName.toLowerCase())
+        );
+        setCategoryFoods(filtered);
+      } else {
+        setCategoryFoods([]);
+      }
+    } catch (error) {
+      console.error('Error fetching category foods:', error);
+      setCategoryFoods([]);
+    } finally {
+      setLoadingCategory(false);
+    }
+  };
+
+  const handleSelectFood = (food: { displayName: string; originalName: string }) => {
+    onSelectFood(food);
     setSearchQuery('');
     setSuggestions([]);
+    setSelectedCategory(null);
+    setCategoryFoods([]);
     onOpenChange(false);
   };
 
-  const handleCategorySearch = (term: string) => {
-    handleSearch(term);
+  const handleBack = () => {
+    setSelectedCategory(null);
+    setCategoryFoods([]);
   };
+
+  // Filter categories to only show ones with foods
+  const visibleCategories = categoryOrder.filter(
+    (cat) => availableCategories[cat] && availableCategories[cat] > 0
+  );
 
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
@@ -100,15 +171,36 @@ export default function FoodDrawer({ open, onOpenChange, onSelectFood, existingF
 
             {/* Header */}
             <div className="px-4 pt-4 pb-3">
-              <Drawer.Title className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-                add food
-              </Drawer.Title>
-              <Drawer.Description className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                search or browse categories
-              </Drawer.Description>
+              {selectedCategory ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleBack}
+                    className="p-1 -ml-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <div>
+                    <Drawer.Title className="text-base font-medium text-zinc-900 dark:text-zinc-100">
+                      {categoryLabels[selectedCategory]}
+                    </Drawer.Title>
+                    <Drawer.Description className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {categoryFoods.length} items
+                    </Drawer.Description>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Drawer.Title className="text-base font-medium text-zinc-900 dark:text-zinc-100">
+                    add food
+                  </Drawer.Title>
+                  <Drawer.Description className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    search or browse categories
+                  </Drawer.Description>
+                </>
+              )}
             </div>
 
-            {/* Search */}
+            {/* Search - always visible */}
             <div className="px-4 pb-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -149,27 +241,55 @@ export default function FoodDrawer({ open, onOpenChange, onSelectFood, existingF
                     </div>
                   )}
                 </div>
-              ) : (
-                /* Categories */
-                <div className="space-y-4">
-                  {categories.map((category) => (
-                    <div key={category.name}>
-                      <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
-                        {category.name}
-                      </h3>
-                      <div className="flex flex-wrap gap-1.5">
-                        {category.subcategories.map((sub) => (
-                          <button
-                            key={sub}
-                            onClick={() => handleCategorySearch(sub)}
-                            className="px-3 py-1.5 text-xs rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                          >
-                            {sub}
-                          </button>
-                        ))}
-                      </div>
+              ) : selectedCategory ? (
+                /* Category Foods List */
+                <div>
+                  {loadingCategory ? (
+                    <div className="py-8 text-center text-xs text-zinc-400">
+                      loading...
                     </div>
+                  ) : categoryFoods.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-zinc-400">
+                      no foods in this category yet
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {categoryFoods.map((food, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSelectFood(food)}
+                          className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          {food.displayName}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Categories Grid */
+                <div className="grid grid-cols-2 gap-2">
+                  {visibleCategories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => handleCategoryClick(category)}
+                      className="flex flex-col items-start p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-left"
+                    >
+                      <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        {categoryLabels[category]}
+                      </span>
+                      <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                        {availableCategories[category]} items
+                      </span>
+                    </button>
                   ))}
+                  {visibleCategories.length === 0 && (
+                    <div className="col-span-2 py-8 text-center text-xs text-zinc-400">
+                      no categories available yet
+                      <br />
+                      <span className="text-zinc-300">use search to find foods</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
