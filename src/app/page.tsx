@@ -147,8 +147,11 @@ export default function Home() {
                   <AddFoodCard onClick={handleOpenDrawer} />
                 </div>
               ) : (
-                /* Food cards */
-                <div className={`flex gap-3 sm:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory w-full ${foodItems.length + loadingCards <= 1 ? 'justify-center' : ''}`}>
+                /* Food cards - CSS grid for equal heights */
+                <div
+                  className={`grid grid-flow-col auto-cols-max gap-3 sm:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory w-full ${foodItems.length + loadingCards <= 1 ? 'justify-center' : ''}`}
+                  style={{ gridAutoRows: '1fr' }}
+                >
                   <AnimatePresence mode="popLayout" initial={false}>
                     {foodItems.map((food, index) => (
                       <motion.div
@@ -164,7 +167,7 @@ export default function Home() {
                           layout: { duration: 0.15, ease: "easeInOut" },
                           opacity: { duration: 0.15 }
                         }}
-                        className="snap-start"
+                        className="snap-start h-full"
                       >
                         <FoodCard
                           food={food}
@@ -176,13 +179,13 @@ export default function Home() {
 
                   {/* Skeleton cards while loading */}
                   {[...Array(loadingCards)].map((_, index) => (
-                    <div key={`skeleton-${index}`} className="snap-start">
+                    <div key={`skeleton-${index}`} className="snap-start h-full">
                       <FoodCardSkeleton />
                     </div>
                   ))}
 
                   {/* Add Food Button */}
-                  <div className="snap-start">
+                  <div className="snap-start h-full">
                     <AddFoodCard onClick={handleOpenDrawer} />
                   </div>
                 </div>
